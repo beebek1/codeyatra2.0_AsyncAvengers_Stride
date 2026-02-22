@@ -9,11 +9,12 @@ import Dashboard from './pages/Dashboard';
 import ForgotPassword from './pages/auth/ForgotPassword';
 import QuizPage from './pages/Quizpage';
 import { ScrollToTop , NotFound} from './components/Elements';
-import Navbar from './components/Navbar';
+import CareersPage from './pages/Career';
 import Schedule from './pages/Schedule';
 import Account from './pages/Account';
 
 // Components
+import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 
 function AppWrapper() {
@@ -30,6 +31,7 @@ function AppWrapper() {
            <Route path="/quiz" element={<QuizPage/>} />   
            <Route path="/" element={<Dashboard/>} />
            <Route path="/forgot-password" element={<ForgotPassword/>} />
+           <Route path="/career" element={<CareersPage/>} />
            <Route path="/schedule" element={<Schedule/>} />
            <Route path="/account" element={<Account />} />
 
