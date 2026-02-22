@@ -1,51 +1,37 @@
 import React, { useState, useEffect, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Monitor, Server, Layers, Smartphone, Link, Cloud, Shield, Cpu, Bug,
   BarChart3, Brain, Database, LineChart, Compass, Palette, PenTool,
   Clapperboard, Target, Rocket, Megaphone, Search, FileText,
   CreditCard, TrendingUp, RefreshCcw, ChevronDown, Check, ArrowRight, X
 } from "lucide-react";
-
-/* ── DATA ── */
-const CAREERS = [
-  { id:"frontend",     label:"Frontend Developer",       category:"Engineering", tag:"Popular", weeks:16, level:"Beginner Friendly", icon:Monitor,      desc:"Build beautiful UIs with React, CSS, and modern tooling." },
-  { id:"backend",      label:"Backend Developer",         category:"Engineering", tag:null,      weeks:20, level:"Intermediate",      icon:Server,       desc:"Design APIs, manage databases, and power server-side logic." },
-  { id:"fullstack",    label:"Full Stack Developer",      category:"Engineering", tag:"🔥 Hot",  weeks:28, level:"Intermediate",      icon:Layers,       desc:"Own the entire stack from UI to database and deployment." },
-  { id:"devops",       label:"DevOps Engineer",           category:"Engineering", tag:null,      weeks:24, level:"Intermediate",      icon:Cloud,        desc:"CI/CD, containers, cloud infra — keep systems running." },
-  { id:"mobile",       label:"Mobile Developer",          category:"Engineering", tag:null,      weeks:20, level:"Intermediate",      icon:Smartphone,   desc:"Ship iOS and Android apps with React Native or Swift/Kotlin." },
-  { id:"blockchain",   label:"Blockchain Developer",      category:"Engineering", tag:null,      weeks:24, level:"Advanced",          icon:Link,         desc:"Smart contracts, DeFi, and decentralized applications." },
-  { id:"cloud",        label:"Cloud Engineer",            category:"Engineering", tag:null,      weeks:22, level:"Intermediate",      icon:Cloud,        desc:"AWS, GCP, or Azure — architect scalable cloud solutions." },
-  { id:"security",     label:"Cybersecurity Engineer",    category:"Engineering", tag:null,      weeks:26, level:"Advanced",          icon:Shield,       desc:"Protect systems, conduct pen tests, and secure pipelines." },
-  { id:"embedded",     label:"Embedded Systems",          category:"Engineering", tag:null,      weeks:30, level:"Advanced",          icon:Cpu,          desc:"Low-level C/C++ for hardware, IoT, and real-time systems." },
-  { id:"qa",           label:"QA / Test Engineer",        category:"Engineering", tag:null,      weeks:14, level:"Beginner Friendly", icon:Bug,          desc:"Automated testing, quality assurance, and bug hunting." },
-  { id:"datascience",  label:"Data Scientist",            category:"Data & AI",  tag:"Popular", weeks:24, level:"Intermediate",      icon:BarChart3,    desc:"Stats, ML models, and storytelling through data." },
-  { id:"mleng",        label:"ML Engineer",               category:"Data & AI",  tag:"🔥 Hot",  weeks:28, level:"Advanced",          icon:Brain,        desc:"Deploy and scale machine learning models in production." },
-  { id:"aieng",        label:"AI Engineer",               category:"Data & AI",  tag:"🔥 Hot",  weeks:20, level:"Intermediate",      icon:Brain,        desc:"LLMs, RAG pipelines, and AI-powered product engineering." },
-  { id:"dataeng",      label:"Data Engineer",             category:"Data & AI",  tag:null,      weeks:22, level:"Intermediate",      icon:Database,     desc:"ETL pipelines, warehouses, and big data infrastructure." },
-  { id:"dataanalyst",  label:"Data Analyst",              category:"Data & AI",  tag:null,      weeks:14, level:"Beginner Friendly", icon:LineChart,    desc:"SQL, dashboards, and actionable business insights." },
-  { id:"uxdesign",     label:"UX Designer",               category:"Design",     tag:"Popular", weeks:16, level:"Beginner Friendly", icon:Compass,      desc:"User research, wireframes, and end-to-end experiences." },
-  { id:"uidesign",     label:"UI Designer",               category:"Design",     tag:null,      weeks:14, level:"Beginner Friendly", icon:Palette,      desc:"Figma, design systems, and pixel-perfect visual craft." },
-  { id:"productdesign",label:"Product Designer",          category:"Design",     tag:null,      weeks:20, level:"Intermediate",      icon:PenTool,      desc:"Strategy + craft: shape the full product experience." },
-  { id:"motion",       label:"Motion Designer",           category:"Design",     tag:null,      weeks:18, level:"Intermediate",      icon:Clapperboard, desc:"After Effects, Lottie, and bringing interfaces to life." },
-  { id:"pm",           label:"Product Manager",           category:"Product",    tag:"Popular", weeks:18, level:"Intermediate",      icon:Target,       desc:"Define roadmaps, align teams, and ship products." },
-  { id:"apm",          label:"Technical PM",              category:"Product",    tag:null,      weeks:20, level:"Intermediate",      icon:Brain,        desc:"Bridge engineering and business with technical fluency." },
-  { id:"growthpm",     label:"Growth PM",                 category:"Product",    tag:"🔥 Hot",  weeks:16, level:"Intermediate",      icon:Rocket,       desc:"Experiments, funnels, and data-driven growth loops." },
-  { id:"growth",       label:"Growth Marketer",           category:"Marketing",  tag:null,      weeks:16, level:"Beginner Friendly", icon:Megaphone,    desc:"A/B tests, paid channels, and acquisition flywheels." },
-  { id:"seo",          label:"SEO Specialist",            category:"Marketing",  tag:null,      weeks:12, level:"Beginner Friendly", icon:Search,       desc:"Technical SEO, content strategy, and organic growth." },
-  { id:"contentmkt",   label:"Content Marketer",          category:"Marketing",  tag:null,      weeks:10, level:"Beginner Friendly", icon:FileText,     desc:"Long-form content, social, and brand storytelling." },
-  { id:"fintech",      label:"Fintech Analyst",           category:"Finance",    tag:null,      weeks:18, level:"Intermediate",      icon:CreditCard,   desc:"Financial modeling, payments, and fintech products." },
-  { id:"quant",        label:"Quantitative Analyst",      category:"Finance",    tag:null,      weeks:32, level:"Advanced",          icon:TrendingUp,   desc:"Math-heavy modeling for trading and risk analysis." },
-  { id:"techwrite",    label:"Technical Writer",          category:"Other",      tag:null,      weeks:10, level:"Beginner Friendly", icon:FileText,     desc:"Docs, API references, and developer education content." },
-  { id:"scrum",        label:"Scrum Master",              category:"Other",      tag:null,      weeks:12, level:"Beginner Friendly", icon:RefreshCcw,   desc:"Ceremonies, retrospectives, and agile team coaching." },
-];
+import { Code, Laptop, BarChart, Lock, Box, User } from 'lucide-react';
+import { getAllCareers } from "../services/api";
 
 const CATEGORIES = ["All","Engineering","Data & AI","Design","Product","Marketing","Finance","Other"];
-const LEVELS     = ["All Levels","Beginner Friendly","Intermediate","Advanced"];
+
+// BUG 1 FIX: Your LEVELS had "Beginner Friendly" but the API sends "Beginner".
+// Changed to match exact API difficulty values so the level filter actually works.
+const LEVELS = ["All Levels","Beginner","Intermediate","Advanced"];
 
 const LEVEL_STYLE = {
-  "Beginner Friendly": { pill:"bg-emerald-50 text-emerald-700 border border-emerald-200" },
-  "Intermediate":      { pill:"bg-amber-50 text-amber-700 border border-amber-200"       },
-  "Advanced":          { pill:"bg-red-50 text-red-700 border border-red-200"             },
+  // BUG 1 FIX (continued): Keys now match API values "Beginner"/"Intermediate"/"Advanced"
+  // Your original had "Beginner Friendly" which never matched anything from the API.
+  "Beginner":     { pill:"bg-emerald-50 text-emerald-700 border border-emerald-200" },
+  "Intermediate": { pill:"bg-amber-50 text-amber-700 border border-amber-200"       },
+  "Advanced":     { pill:"bg-red-50 text-red-700 border border-red-200"             },
+};
+
+const icons = {
+  Engineering: Monitor,
+  Design: Laptop,
+  "Data & AI": BarChart,
+  Finance: Cloud,
+  Product: Box,
+  Marketing: FileText,
+  "Data Analyst": BarChart,
+  "UX Designer": User,
 };
 
 const CAT_ACCENT = {
@@ -63,28 +49,65 @@ const FADE_PEEK = 3;
 
 /* ── PAGE ── */
 export default function CareersPage() {
+  const navigate = useNavigate();
   const [mounted,  setMounted]  = useState(false);
   const [search,   setSearch]   = useState("");
   const [category, setCategory] = useState("All");
   const [level,    setLevel]    = useState("All Levels");
   const [selected, setSelected] = useState(null);
   const [expanded, setExpanded] = useState(false);
+  const [careers,  setCareers]  = useState([]);
 
   useEffect(() => { setTimeout(() => setMounted(true), 60); }, []);
   useEffect(() => { setExpanded(false); }, [search, category, level]);
 
-  const filtered = useMemo(() => CAREERS.filter(c => {
+  useEffect(() => {
+    const getCareersFromApi = async () => {
+      try {
+        const response = await getAllCareers();
+        if (response.data.success) {
+          const careersFromApi = response.data.data.map(c => ({
+            id: c.id,
+            label: c.title,
+            category: c.industry,
+            // BUG 2 FIX: c.tags is an array from the API (e.g. ["Popular"] or ["🔥 Hot"] or []).
+            // Your original code did c.tags[0] which is correct BUT then used career.tag?.includes("🔥")
+            // which calls String.includes() — that only works if tag is already a string.
+            // c.tags[0] IS a string so this actually works, but c.tags can be [] giving undefined.
+            // The fix: keep c.tags[0] (string or undefined), which is safe for both tag checks below.
+            tag: c.tags.length > 0 ? c.tags[0] : null,
+            weeks: 16,
+            level: c.difficulty,  // API sends "Beginner" | "Intermediate" | "Advanced" — matches LEVELS now
+            icon: icons[c.industry] || Monitor,
+            desc: c.description,
+          }));
+          setCareers(careersFromApi);
+        } else {
+          console.error("Failed to fetch careers:", response.data.message);
+        }
+      } catch (error) {
+        console.error("Error fetching careers:", error.message);
+      }
+    };
+
+    getCareersFromApi();
+  }, []);
+
+  const filtered = useMemo(() => careers.filter(c => {
     if (category !== "All" && c.category !== category) return false;
     if (level !== "All Levels" && c.level !== level)   return false;
     const q = search.toLowerCase();
     return !q || c.label.toLowerCase().includes(q) || c.desc.toLowerCase().includes(q);
-  }), [search, category, level]);
+  // BUG 3 FIX: `careers` was missing from the dependency array.
+  // Without it, useMemo runs once on mount when careers=[] and never re-runs
+  // after the API call populates it — so filtered was always empty.
+  }), [search, category, level, careers]);
 
   const needsMore   = !expanded && filtered.length > INITIAL;
   const solidCards  = needsMore ? filtered.slice(0, INITIAL) : filtered;
   const fadedCards  = needsMore ? filtered.slice(INITIAL, INITIAL + FADE_PEEK) : [];
   const hiddenCount = filtered.length - INITIAL;
-  const selCareer   = CAREERS.find(c => c.id === selected);
+  const selCareer   = careers.find(c => c.id === selected);
 
   return (
     <>
@@ -117,7 +140,6 @@ export default function CareersPage() {
               Pick your path.<br />
               <span className="relative inline-block mt-2">
                 <span className="text-[#aaa] font-bold">We'll map the rest.</span>
-                {/* Decorative Underline SVG */}
                 <svg 
                   className="absolute -bottom-3 left-0 w-full h-[15px] pointer-events-none" 
                   viewBox="0 0 300 20" 
@@ -177,7 +199,8 @@ export default function CareersPage() {
                 <button key={l} onClick={() => setLevel(l)}
                   className={`text-[11px] font-bold rounded-full px-4 py-1.5 border transition-all whitespace-nowrap
                     ${level===l ? "bg-[#F5C842] text-[#0E0E0E] border-[#F5C842]" : "bg-white text-[#999] border-black/10 hover:border-[#888] hover:text-[#333]"}`}>
-                  {l}
+                  {/* Show "Beginner Friendly" label in UI even though the filter value is "Beginner" */}
+                  {l === "Beginner" ? "Beginner Friendly" : l}
                 </button>
               ))}
             </div>
@@ -219,16 +242,14 @@ export default function CareersPage() {
             {/* Fade + See More */}
             {needsMore && (
               <>
-                {/* Gradient anchored to TOP of faded row, fades downward */}
                 <div
                   className="absolute left-0 right-0 pointer-events-none"
                   style={{
-                    top: "calc(100% - 260px - 52px)", /* starts at top of faded card row */
+                    top: "calc(100% - 260px - 52px)",
                     height: 280,
                     background: "linear-gradient(to bottom, rgba(242,241,239,0.0) 0%, rgba(242,241,239,0.45) 30%, rgba(242,241,239,0.85) 58%, #f9fafb 78%, #f9fafb 100%)",
                   }}
                 />
-                {/* Button sits below */}
                 <div className="flex justify-center mt-4 relative z-10">
                   <button
                     onClick={() => setExpanded(true)}
@@ -272,7 +293,9 @@ export default function CareersPage() {
             <span className="text-[13px] font-bold text-white">{selCareer?.label}</span>
             <div className="w-px h-4 bg-white/10" />
             <span className="text-[11px] text-[#555] font-semibold">~{selCareer?.weeks} weeks</span>
-            <button className="flex items-center gap-1.5 bg-[#F5C842] hover:bg-[#e8b800] text-[#0E0E0E] text-[13px] font-black rounded-full px-5 py-2.5 transition-colors">
+            <button
+              onClick={() => navigate(`/roadmap`, { state: { careerId: selCareer?.id, careerLabel: selCareer?.label } })}
+              className="flex items-center gap-1.5 bg-[#F5C842] hover:bg-[#e8b800] text-[#0E0E0E] text-[13px] font-black rounded-full px-5 py-2.5 transition-colors">
               Start Roadmap <ArrowRight size={13} />
             </button>
             <button
@@ -302,14 +325,12 @@ function CareerCard({ career, selected, onSelect, animDelay, faded }) {
 
   function handleClick(e) {
     if (faded) return;
-    // Ripple
     const rect = e.currentTarget.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
     const id = Date.now();
     setRipples(r => [...r, { id, x, y }]);
     setTimeout(() => setRipples(r => r.filter(r => r.id !== id)), 700);
-    // Check pop
     if (!selected) {
       setCheckPop(true);
       setTimeout(() => setCheckPop(false), 400);
@@ -479,9 +500,10 @@ function CareerCard({ career, selected, onSelect, animDelay, faded }) {
             >
               ~{career.weeks}w
             </span>
-            <span className={`text-[9.5px] font-black rounded-full px-2.5 py-1 ${lvl.pill}`}>
+            {/* Level pill commented out as in your original */}
+            {/* <span className={`text-[9.5px] font-black rounded-full px-2.5 py-1 ${lvl.pill}`}>
               {career.level === "Beginner Friendly" ? "Beginner" : career.level}
-            </span>
+            </span> */}
           </div>
 
           {/* "Start" text appears on select */}

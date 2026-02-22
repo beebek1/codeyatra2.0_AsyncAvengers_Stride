@@ -7,11 +7,14 @@ export const getAllCareers = async (req, res) => {
     const filter = industry ? { where: { industry } } : {};
 
     const careers = await Career.findAll(filter);
+    
+    // Convert Sequelize instances to plain objects
+    const careersData = careers.map(career => career.toJSON());
 
     return res.status(200).json({
       success: true,
-      count: careers.length,
-      data: careers,
+      count: careersData.length,
+      data: careersData,
     });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });
