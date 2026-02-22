@@ -94,6 +94,14 @@ export default function CareersPage() {
         .font-syne { font-family: 'Syne', sans-serif !important; }
         .fade-up { opacity:0; transform:translateY(16px); transition:opacity .55s ease, transform .55s ease; }
         .fade-up.vis { opacity:1; transform:translateY(0); }
+        @keyframes rippleOut {
+          0%   { transform: scale(1);  opacity: 1; }
+          100% { transform: scale(28); opacity: 0; }
+        }
+        @keyframes fadeSlideIn {
+          from { opacity:0; transform:translateX(-6px); }
+          to   { opacity:1; transform:translateX(0); }
+        }
       `}</style>
 
       <div className="min-h-screen bg-[#F2F1EF]">
@@ -251,41 +259,107 @@ export default function CareersPage() {
 /* ── CARD ── */
 function CareerCard({ career, selected, onSelect, animDelay, faded }) {
   const [hovered, setHovered] = useState(false);
+  const [ripples, setRipples] = useState([]);
+  const [checkPop, setCheckPop] = useState(false);
   const lvl = LEVEL_STYLE[career.level];
   const cat = CAT_ACCENT[career.category] || CAT_ACCENT["Other"];
   const Icon = career.icon;
 
+  const PHASES = ["Basics", "Intermediate", "Portfolio", "Job Ready"];
+
+  function handleClick(e) {
+    if (faded) return;
+    // Ripple
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const id = Date.now();
+    setRipples(r => [...r, { id, x, y }]);
+    setTimeout(() => setRipples(r => r.filter(r => r.id !== id)), 700);
+    // Check pop
+    if (!selected) {
+      setCheckPop(true);
+      setTimeout(() => setCheckPop(false), 400);
+    }
+    onSelect();
+  }
+
   return (
     <div
-      onClick={faded ? undefined : onSelect}
+      onClick={handleClick}
       onMouseEnter={() => !faded && setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      style={{ animationDelay:`${animDelay}ms` }}
       className={`
-        relative bg-white rounded-2xl overflow-hidden border-2 transition-all duration-200 ease-out
+        relative bg-white rounded-2xl overflow-hidden border-2
         ${faded ? "pointer-events-none" : "cursor-pointer"}
         ${!faded && selected
-          ? "border-[#F5C842] -translate-y-1 shadow-[0_0_0_4px_rgba(245,200,66,0.14),0_14px_40px_rgba(0,0,0,0.11)]"
+          ? "border-[#F5C842] -translate-y-2 shadow-[0_0_0_5px_rgba(245,200,66,0.16),0_20px_50px_rgba(0,0,0,0.13)]"
           : !faded && hovered
-            ? "border-[#0E0E0E] -translate-y-1 shadow-[0_8px_28px_rgba(0,0,0,0.10)]"
+            ? "border-[#0E0E0E] -translate-y-1 shadow-[0_10px_32px_rgba(0,0,0,0.11)]"
             : "border-transparent shadow-[0_1px_3px_rgba(0,0,0,0.06),0_4px_14px_rgba(0,0,0,0.04)]"
         }
       `}
+      style={{
+        animationDelay:`${animDelay}ms`,
+        transition: "transform 0.25s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.25s ease, border-color 0.2s ease",
+      }}
     >
-      {/* Selected accent bar */}
-      {selected && (
-        <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[#F5C842] via-[#FFD84D] to-[#F5C842]/30 z-10" />
-      )}
+      {/* Ripple effects */}
+      {ripples.map(r => (
+        <span
+          key={r.id}
+          className="absolute rounded-full pointer-events-none"
+          style={{
+            left: r.x, top: r.y,
+            width: 8, height: 8,
+            marginLeft: -4, marginTop: -4,
+            background: selected ? "rgba(14,14,14,0.08)" : "rgba(245,200,66,0.35)",
+            animation: "rippleOut 0.65s ease-out forwards",
+          }}
+        />
+      ))}
 
-      <div className="p-5">
+      {/* Selected accent bar — slides in */}
+      <div
+        className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[#F5C842] via-[#FFD84D] to-transparent z-10"
+        style={{
+          transform: selected ? "scaleX(1)" : "scaleX(0)",
+          transformOrigin: "left",
+          transition: "transform 0.35s cubic-bezier(0.34,1.56,0.64,1)",
+        }}
+      />
+
+      {/* Background tint on select */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background: "linear-gradient(135deg, rgba(245,200,66,0.04) 0%, transparent 60%)",
+          opacity: selected ? 1 : 0,
+          transition: "opacity 0.3s ease",
+        }}
+      />
+
+      <div className="relative p-5">
         {/* Top row */}
         <div className="flex items-start justify-between mb-4">
-          <div className={`w-11 h-11 rounded-[14px] flex items-center justify-center ring-4 transition-all ${
-            selected ? "bg-[#F5C842] ring-[#F5C842]/20" : `${cat.bg} ${cat.ring}`
-          }`}>
-            <Icon size={20} strokeWidth={1.8} className={selected ? "text-[#0E0E0E]" : cat.text} />
+          {/* Icon — scales and changes bg on select */}
+          <div
+            style={{
+              background: selected ? "#F5C842" : undefined,
+              transition: "background 0.25s ease, transform 0.25s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.25s ease",
+              transform: selected ? "scale(1.1)" : hovered ? "scale(1.05)" : "scale(1)",
+              boxShadow: selected ? "0 4px 14px rgba(245,200,66,0.4)" : "none",
+            }}
+            className={`w-11 h-11 rounded-[14px] flex items-center justify-center ring-4 ${selected ? "ring-[#F5C842]/20" : cat.ring} ${selected ? "" : cat.bg}`}
+          >
+            <Icon
+              size={20} strokeWidth={1.8}
+              className={selected ? "text-[#0E0E0E]" : cat.text}
+              style={{ transition: "color 0.2s ease" }}
+            />
           </div>
 
+          {/* Tags + check */}
           <div className="flex flex-col items-end gap-1.5">
             {career.tag?.includes("🔥") && (
               <span className="text-[9px] font-black tracking-wide uppercase rounded-full px-2.5 py-1 bg-orange-50 text-orange-600 border border-orange-200">🔥 Hot</span>
@@ -293,6 +367,22 @@ function CareerCard({ career, selected, onSelect, animDelay, faded }) {
             {career.tag === "Popular" && (
               <span className="text-[9px] font-black tracking-wide uppercase rounded-full px-2.5 py-1 bg-violet-50 text-violet-600 border border-violet-200">Popular</span>
             )}
+            {/* Animated check badge */}
+            <div
+              style={{
+                width: 22, height: 22,
+                borderRadius: "50%",
+                background: selected ? "#0E0E0E" : hovered ? "#0E0E0E" : "#F0F0EE",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                transform: checkPop ? "scale(1.4)" : selected ? "scale(1.1)" : "scale(1)",
+                transition: "transform 0.3s cubic-bezier(0.34,1.56,0.64,1), background 0.2s ease",
+              }}
+            >
+              {selected
+                ? <Check size={11} color="#F5C842" strokeWidth={3} />
+                : <ArrowRight size={10} color={hovered ? "#fff" : "#ccc"} strokeWidth={2} />
+              }
+            </div>
           </div>
         </div>
 
@@ -304,23 +394,72 @@ function CareerCard({ career, selected, onSelect, animDelay, faded }) {
         {/* Desc */}
         <p className="text-[12px] text-[#999] leading-relaxed mb-4 line-clamp-2">{career.desc}</p>
 
+        {/* Expandable roadmap phases — slides open on select */}
+        <div
+          style={{
+            maxHeight: selected ? 80 : 0,
+            opacity: selected ? 1 : 0,
+            overflow: "hidden",
+            transition: "max-height 0.4s cubic-bezier(0.4,0,0.2,1), opacity 0.3s ease",
+            marginBottom: selected ? 14 : 0,
+          }}
+        >
+          <div className="flex items-center gap-1.5 pt-1 pb-3">
+            {PHASES.map((phase, i) => (
+              <React.Fragment key={phase}>
+                <div className="flex flex-col items-center gap-1">
+                  <div
+                    className="w-2 h-2 rounded-full"
+                    style={{
+                      background: i === 0 ? "#F5C842" : "#E5E5E5",
+                      transform: selected ? "scale(1)" : "scale(0)",
+                      transition: `transform 0.3s cubic-bezier(0.34,1.56,0.64,1) ${i * 60}ms`,
+                    }}
+                  />
+                  <span className="text-[9px] font-bold text-[#bbb] whitespace-nowrap">{phase}</span>
+                </div>
+                {i < PHASES.length - 1 && (
+                  <div
+                    className="h-px bg-[#E8E8E8] flex-1"
+                    style={{
+                      transform: selected ? "scaleX(1)" : "scaleX(0)",
+                      transformOrigin: "left",
+                      transition: `transform 0.3s ease ${i * 60 + 80}ms`,
+                    }}
+                  />
+                )}
+              </React.Fragment>
+            ))}
+          </div>
+        </div>
+
         {/* Footer */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="text-[10px] font-bold text-[#bbb] bg-[#F5F5F3] rounded-full px-2.5 py-1">~{career.weeks}w</span>
+            <span
+              className="text-[10px] font-bold rounded-full px-2.5 py-1"
+              style={{
+                background: selected ? "#0E0E0E" : "#F5F5F3",
+                color: selected ? "#F5C842" : "#bbb",
+                transition: "background 0.25s ease, color 0.25s ease",
+              }}
+            >
+              ~{career.weeks}w
+            </span>
             <span className={`text-[9.5px] font-black rounded-full px-2.5 py-1 ${lvl.pill}`}>
               {career.level === "Beginner Friendly" ? "Beginner" : career.level}
             </span>
           </div>
 
-          <div className={`w-7 h-7 rounded-full flex items-center justify-center transition-all ${
-            selected || hovered ? "bg-[#0E0E0E]" : "bg-[#F0F0EE]"
-          }`}>
-            {selected
-              ? <Check size={13} color="#F5C842" strokeWidth={2.5} />
-              : <ArrowRight size={12} color={hovered ? "#fff" : "#ccc"} strokeWidth={2} />
-            }
-          </div>
+          {/* "Start" text appears on select */}
+          {selected && (
+            <span
+              className="text-[10px] font-black text-[#C8980A] tracking-wide"
+              style={{ animation: "fadeSlideIn 0.3s ease forwards" }}
+            >
+              Ready to start →
+            </span>
+          )}
         </div>
       </div>
     </div>
