@@ -1,5 +1,5 @@
 
-# CareerForge AI (Async Avengers)
+# Stride (Async Avengers)
 
 ### **The Problem (Why we built this)**
 

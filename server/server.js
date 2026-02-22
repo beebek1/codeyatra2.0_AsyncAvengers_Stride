@@ -2,10 +2,13 @@ import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import { sequelize, connectDB } from "./src/db/db.js";
-import rootRouter from './src/modules/main.router.js';
+
+// Import your route modules
+import rootRouter from "./src/modules/main.router.js";
 
 const app = express();
 
+// --- Middleware ---
 app.use(
   cors({
     origin: "http://localhost:5173",
@@ -15,67 +18,26 @@ app.use(
 
 app.use(express.json());
 
-// Mount Routes
+// --- Routes ---
 app.use("/api", rootRouter);
 
 app.get("/", (req, res) => {
-  res.json({ message: "Welcome to the Home Page" });
+  res.json({ message: "Welcome to the API Home Page" });
 });
 
+// --- Database & Server Start ---
 const startServer = async () => {
   const PORT = process.env.PORT || 3000;
   try {
     await connectDB();
-
-    // SYNC LOGIC EXPLAINED BELOW
     await sequelize.sync({ alter: true });
 
     app.listen(PORT, () => {
-      console.log(`Server is running on http://localhost:${PORT}`);
+      console.log(`🚀 Server running at http://localhost:${PORT}`);
     });
   } catch (error) {
     console.error("Failed to start server:", error);
-  }
-};
-
-startServer();
-import "dotenv/config";
-import express from "express";
-import cors from "cors";
-import { sequelize, connectDB } from "./src/db/db.js";
-import authRoutes from "./src/modules/auth/auth.routes.js"; 
-const app = express();
-
-app.use(
-  cors({
-    origin: "http://localhost:5173",
-    credentials: true,
-  })
-);
-
-app.use(express.json());
-
-// Auth Routes
-app.use("/api/auth", authRoutes);
-
-app.get("/", (req, res) => {
-  res.json({ message: "Welcome to the Home Page" });
-});
-
-const startServer = async () => {
-  const PORT = process.env.PORT || 3000;
-
-  try {
-    await connectDB();
-
-    // ⚠ Use alter only in development
-    await sequelize.sync({ alter: true });
-
-    app.listen(PORT, () => {
-      console.log(`Server is running on http://localhost:${PORT}`);
-    });
-  } catch (error) {
-    console.error("Failed to start server:", error);
+    process.exit(1); 
   }
 };
 
