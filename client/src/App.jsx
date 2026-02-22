@@ -11,6 +11,7 @@ import ForgotPassword from './pages/auth/ForgotPassword';
 import QuizPage from './pages/Quizpage';
 import { ScrollToTop , NotFound} from './components/Elements';
 import Schedule from './pages/Schedule';
+import Kanban from './components/Kanban';
 
 =======
 import QuizPage from './pages/Quizpage'; 
@@ -38,6 +39,7 @@ function AppWrapper() {
            <Route path="/dashboard" element={<Dashboard/>} />
            <Route path="/forgot-password" element={<ForgotPassword/>} />
            <Route path="/schedule" element={<Schedule/>} />
+           <Route path="/kanban" element={<Kanban/>} />
 
         {/* fallout */}
         <Route path="*" element={<NotFound />} />
