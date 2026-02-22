@@ -4,9 +4,12 @@
 @tailwind utilities;
 
 @layer base {
-
   html,
   body {
-    @apply bg-[#222222];
+    @apply bg-[#222222] text-white;
+  }
+
+  input, textarea, select {
+    @apply text-gray-900 bg-white;
   }
 }

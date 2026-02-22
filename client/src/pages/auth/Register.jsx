@@ -1,10 +1,10 @@
 import React, { useState } from 'react'
 import { Eye, EyeOff } from 'lucide-react'
 import { createUserWithEmailAndPassword, signInWithPopup } from 'firebase/auth'
-import { auth, googleProvider } from '../component/firebase'
+import { auth, googleProvider } from '../../services/firebase'
 import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import gmail from "../assets/gmail.png"
+import gmail from "../../assets/gmail.png"
 
 const Register = () => {
   const [showPassword, setShowPassword] = useState(false)
