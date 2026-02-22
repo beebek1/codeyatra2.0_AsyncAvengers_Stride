@@ -14,6 +14,7 @@ import Schedule from './pages/Schedule';
 import Kanban from './components/Kanban';
 
 import Account from './pages/Account';
+import Roadmap from './pages/Roadmap';
 
 // Components
 import Navbar from './components/Navbar';
@@ -40,6 +41,7 @@ function AppWrapper() {
            <Route path="/schedule" element={<Schedule/>} />
            <Route path="/kanban" element={<Kanban/>} />
           <Route path="/account" element={<Account />} />
+            <Route path="/roadmap" element={<Roadmap/>} />
 
         {/* fallout */}
         <Route path="*" element={<NotFound />} />
