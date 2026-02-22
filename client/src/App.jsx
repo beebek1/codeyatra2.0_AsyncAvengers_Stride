@@ -7,6 +7,7 @@ import Dashboard from './pages/Dashboard';
 import ForgotPassword from './pages/auth/ForgotPassword';
 import QuizPage from './pages/Quizpage';
 import { ScrollToTop , NotFound} from './components/Elements';
+import Navbar from './components/Navbar';
 
 
 function AppWrapper() {
@@ -15,6 +16,7 @@ function AppWrapper() {
   return (
     <>
       <Toaster position='top-right' />
+      <Navbar/>
       <Routes>
            
            <Route path="/login" element={<Login/>} />   
@@ -34,7 +36,7 @@ function App() {
   return (
     <Router>
       <ScrollToTop />
-      <div className="bg-[#080808] min-h-screen text-white">
+      <div>
         <AppWrapper />
       </div>
     </Router>
