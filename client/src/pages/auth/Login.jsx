@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
+import { LoaderButton } from '../../components/Elements';
 
 const LoginPage = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -84,13 +85,7 @@ const LoginPage = () => {
               </a>
             </div>
 
-            {/* Submit */}
-            <button
-              type="submit"
-              className="w-full py-2.5 px-4 rounded-md text-sm font-medium text-white bg-[#0a0a0a] hover:bg-black focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black transition-colors"
-            >
-              Login
-            </button>
+            <LoaderButton text={"Login"}/>
 
           </form>
 
