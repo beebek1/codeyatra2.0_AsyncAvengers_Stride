@@ -10,5 +10,6 @@ const router = Router();
 router.get("/", getAllCareers);
 router.get("/:id", getCareerById);
 router.post("/createCareer", createCareer);
+router.post("/create-careers", createCareer);
 
 export default router;

@@ -5,6 +5,7 @@ import { auth, googleProvider } from '../../services/firebase'
 import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import gmail from "../../assets/gmail.png"
+import { registerUser } from '../../services/api'
 
 const Register = () => {
   const [showPassword, setShowPassword] = useState(false)
@@ -23,9 +24,15 @@ const Register = () => {
     }
     setLoading(true)
     try {
-      await createUserWithEmailAndPassword(auth, form.email, form.password)
-      toast.success('Account created successfully!')
-      navigate('/login')
+      await createUserWithEmailAndPassword(auth, form.email, form.password);
+      const response = await registerUser({ email: form.email, password: form.password });
+      if (response.data.success) {
+        setForm({ fullName: '', email: '', password: '', confirmPassword: '' })
+        toast.success('Account created successfully!')
+        navigate('/login')
+      }else{
+        toast.error(response.data.message || 'Registration failed.')
+      }
     } catch (error) {
       toast.error(error.message)
     } finally {

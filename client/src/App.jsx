@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 
 // Pages
@@ -7,45 +7,48 @@ import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
 import Dashboard from './pages/Dashboard';
 import ForgotPassword from './pages/auth/ForgotPassword';
-import QuizPage from './pages/Quizpage'; 
+import QuizPage from './pages/Quizpage';
+import { ScrollToTop , NotFound, LoadingScreen} from './components/Elements';
+import CareersPage from './pages/Career';
+import Schedule from './pages/Schedule';
+import Kanban from './components/Kanban';
+
 import Account from './pages/Account';
 import Roadmap from './pages/Roadmap';
 
 // Components
-import { ScrollToTop, NotFound } from './components/Elements';
+import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 
 function AppWrapper() {
-  const role = "org"; 
+
+  const location = useLocation();
+  const hideComponents = location.pathname === '/register' || location.pathname === '/forgot-password' || location.pathname === '/login'
 
   return (
     // Added flex flex-col and min-h-screen to push the footer to the bottom
     <div className="flex flex-col min-h-screen w-full">
       <Toaster position='top-right' />
-      
-      {/* flex-grow ensures the routing area takes up all available space, pushing the footer down */}
-      <main className="flex-grow">
-        <Routes>
-          <Route path="/" element={<Register/>} />
-          <Route path="/login" element={<Login/>} />   
-          <Route path="/quiz" element={<QuizPage/>} />   
-          <Route path="/dashboard" element={<Dashboard/>} />
-          <Route path="/forgot-password" element={<ForgotPassword/>} />
-          <Route path="/account" element={<Account/>} />
-          {/* --- NEW ROADMAP ROUTES --- */}
-          <Route path="/roadmap" element={<Roadmap/>} />
-          {/* Placeholders for the individual level pages so your demo doesn't break */}
-          <Route path="/roadmap/beginner" element={<div className="p-20 text-center text-3xl font-black uppercase">Beginner Content</div>} />
-          <Route path="/roadmap/intermediate" element={<div className="p-20 text-center text-3xl font-black uppercase text-[#f5c842]">Intermediate Content</div>} />
-          <Route path="/roadmap/advanced" element={<div className="p-20 text-center text-3xl font-black uppercase">Advanced Content</div>} />
+      { !hideComponents && <Navbar/> }
+      <Routes>
+           
+           <Route path="/login" element={<Login/>} />   
+           <Route path="/register" element={<Register/>} />
+           <Route path="/quiz" element={<QuizPage/>} />   
+           <Route path="/" element={<Dashboard/>} />
+           <Route path="/forgot-password" element={<ForgotPassword/>} />
+           <Route path="/careers" element={<CareersPage/>} />
+           <Route path="/schedule" element={<Schedule/>} />
+           <Route path="/kanban" element={<Kanban/>} />
+          <Route path="/account" element={<Account />} />
+            <Route path="/roadmap" element={<Roadmap/>} />
 
-          {/* fallout */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </main>
+        {/* fallout */}
+        <Route path="*" element={<NotFound />} />
 
-      {/* Global Footer appears on every page */}
-      <Footer />
+      </Routes>
+
+      { !hideComponents && <Footer />}
     </div>
   );
 }
@@ -54,7 +57,7 @@ function App() {
   return (
     <Router>
       <ScrollToTop />
-      <div className="min-h-screen font-sans text-gray-900">
+      <div>
         <AppWrapper />
       </div>
     </Router>
