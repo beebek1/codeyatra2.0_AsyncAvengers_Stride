@@ -24,3 +24,5 @@ const config = {
 
 export const registerUser = (data) => Api.post("/api/auth/register", data);
 export const loginUser = (data) => Api.post("/api/auth/login", data);
+
+export const getAllCareers = () => Api.get("/api/career/");
