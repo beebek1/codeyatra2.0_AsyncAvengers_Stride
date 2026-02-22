@@ -2,9 +2,9 @@ import { LoaderButton } from '../../components/Elements';
 import React, { useState } from 'react'
 import { Eye, EyeOff } from 'lucide-react'
 import { signInWithEmailAndPassword, signInWithPopup } from 'firebase/auth'
-import { auth, googleProvider } from '../component/firebase'
+import { auth, googleProvider } from '../../services/firebase'
 import { useNavigate } from 'react-router-dom'
-import gmail from "../assets/gmail.png"
+import gmail from "../../assets/gmail.png"
 import toast from 'react-hot-toast'
 
 const Login = () => {

@@ -1,12 +1,12 @@
 import { useState } from 'react'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
-import Login from './pages/Login';
-import Register from './pages/Register';
+import Login from './pages/auth/Login';
+import Register from './pages/auth/Register';
 import Dashboard from './pages/Dashboard';
-import ForgotPassword from './pages/ForgotPassword';
-import './App.css'
+import ForgotPassword from './pages/auth/ForgotPassword';
 import QuizPage from './pages/Quizpage';
+import { ScrollToTop , NotFound} from './components/Elements';
 
 
 function AppWrapper() {
