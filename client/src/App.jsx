@@ -8,7 +8,7 @@ import Register from './pages/auth/Register';
 import Dashboard from './pages/Dashboard';
 import ForgotPassword from './pages/auth/ForgotPassword';
 import QuizPage from './pages/Quizpage';
-import { ScrollToTop , NotFound} from './components/Elements';
+import { ScrollToTop , NotFound, LoadingScreen} from './components/Elements';
 import CareersPage from './pages/Career';
 import Schedule from './pages/Schedule';
 import Kanban from './components/Kanban';
