@@ -109,14 +109,47 @@ export default function CareersPage() {
         <div className="max-w-6xl mx-auto px-5">
 
           {/* HERO */}
-          <div className={`fade-up ${mounted?"vis":""} pt-14 pb-10 text-center`}>
-            <h1 className="font-black text-[#0E0E0E] tracking-tight leading-[1.06] mb-3" style={{fontSize:"clamp(2rem,5vw,3.4rem)"}}>
+          <div className={`fade-up ${mounted ? "vis" : ""} pt-14 pb-10 text-center`}>
+            <h1 
+              className="font-black text-[#0E0E0E] tracking-tight leading-[1.15] mb-6" 
+              style={{ fontSize: "clamp(2.4rem, 6vw, 3.8rem)" }}
+            >
               Pick your path.<br />
-              <span className="text-[#aaa] font-bold">We'll map the rest.</span>
+              <span className="relative inline-block mt-2">
+                <span className="text-[#aaa] font-bold">We'll map the rest.</span>
+                {/* Decorative Underline SVG */}
+                <svg 
+                  className="absolute -bottom-3 left-0 w-full h-[15px] pointer-events-none" 
+                  viewBox="0 0 300 20" 
+                  preserveAspectRatio="none" 
+                  fill="none"
+                >
+                  <path 
+                    d="M5 15C50 5 150 5 295 15" 
+                    stroke="#F5C842" 
+                    strokeWidth="6" 
+                    strokeLinecap="round" 
+                    className="path-draw"
+                  />
+                </svg>
+              </span>
             </h1>
-            <p className="text-[15px] text-[#999] max-w-sm mx-auto leading-relaxed">
+
+            <p className="text-[16px] text-[#999] max-w-md mx-auto leading-relaxed">
               Every career comes with a week-by-week AI roadmap, a Fit Score, and a Kanban board — ready to start today.
             </p>
+
+            <style>{`
+              @keyframes draw {
+                to { stroke-dashoffset: 0; }
+              }
+              .path-draw {
+                stroke-dasharray: 300;
+                stroke-dashoffset: 300;
+                animation: draw 1.2s ease-out forwards;
+                animation-delay: 0.8s;
+              }
+            `}</style>
           </div>
 
           {/* FILTERS */}

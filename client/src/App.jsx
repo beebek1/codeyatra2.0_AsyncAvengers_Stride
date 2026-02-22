@@ -8,13 +8,14 @@ import Register from './pages/auth/Register';
 import Dashboard from './pages/Dashboard';
 import ForgotPassword from './pages/auth/ForgotPassword';
 import QuizPage from './pages/Quizpage';
-import { ScrollToTop , NotFound} from './components/Elements';
+import { ScrollToTop , NotFound, LoadingScreen} from './components/Elements';
 import CareersPage from './pages/Career';
 import Schedule from './pages/Schedule';
 import Kanban from './components/Kanban';
 import ProtectedRoute from './protected/ProtectedROute';
 
 import Account from './pages/Account';
+import Roadmap from './pages/Roadmap';
 
 // Components
 import Navbar from './components/Navbar';
@@ -44,6 +45,8 @@ function AppWrapper() {
           <Route path="/schedule" element={<ProtectedRoute element={<Schedule />} />} />
           <Route path="/kanban" element={<ProtectedRoute element={<Kanban />} />} />
           <Route path="/account" element={<ProtectedRoute element={<Account />} />} />
+          <Route path="/roadmap" element={<Roadmap/>} />
+
 
         {/* fallout */}
         <Route path="*" element={<NotFound />} />
