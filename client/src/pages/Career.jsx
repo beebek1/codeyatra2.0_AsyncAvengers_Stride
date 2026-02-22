@@ -104,7 +104,7 @@ export default function CareersPage() {
         }
       `}</style>
 
-      <div className="min-h-screen bg-[#F2F1EF]">
+      <div className="min-h-screen bg-[#f9fafb]">
 
         <div className="max-w-6xl mx-auto px-5">
 
@@ -192,7 +192,7 @@ export default function CareersPage() {
                   style={{
                     top: "calc(100% - 260px - 52px)", /* starts at top of faded card row */
                     height: 280,
-                    background: "linear-gradient(to bottom, rgba(242,241,239,0.0) 0%, rgba(242,241,239,0.45) 30%, rgba(242,241,239,0.85) 58%, #F2F1EF 78%, #F2F1EF 100%)",
+                    background: "linear-gradient(to bottom, rgba(242,241,239,0.0) 0%, rgba(242,241,239,0.45) 30%, rgba(242,241,239,0.85) 58%, #f9fafb 78%, #f9fafb 100%)",
                   }}
                 />
                 {/* Button sits below */}
