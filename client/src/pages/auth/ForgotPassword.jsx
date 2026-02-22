@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { sendPasswordResetEmail } from 'firebase/auth'
-import { auth } from '../component/firebase'
+import { auth } from '../components/firebase'
 import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 
