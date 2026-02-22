@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
+import Login from './pages/Login';
 import Register from './pages/Register';
 import './App.css'
 
@@ -12,6 +13,7 @@ function App() {
 
       <Routes>
            
+           <Route path="/login" element={<Login/>} />   
            <Route path="/" element={<Register/>} />   
 
       </Routes>
