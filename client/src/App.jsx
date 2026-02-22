@@ -7,6 +7,8 @@ import Dashboard from './pages/Dashboard';
 import ForgotPassword from './pages/auth/ForgotPassword';
 import QuizPage from './pages/Quizpage';
 import { ScrollToTop , NotFound} from './components/Elements';
+import Schedule from './pages/Schedule';
+
 
 
 function AppWrapper() {
@@ -23,6 +25,7 @@ function AppWrapper() {
            <Route path="/" element={<Register/>} />   
            <Route path="/dashboard" element={<Dashboard/>} />
            <Route path="/forgot-password" element={<ForgotPassword/>} />
+           <Route path="/schedule" element={<Schedule/>} />
 
         {/* fallout */}
         <Route path="*" element={<NotFound />} />
