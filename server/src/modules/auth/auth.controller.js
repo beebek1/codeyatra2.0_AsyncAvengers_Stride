@@ -1,5 +1,6 @@
 import bcrypt from "bcrypt";
 import User from "./auth.models.js";
+import jwt from "jsonwebtoken"
 import { generateToken } from "../../utils/token.js";
 
 export const registerUser = async (req, res) => {
@@ -86,6 +87,35 @@ export const login = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Login failed",
+      error: error.message,
+    });
+  }
+};
+
+export const getMe = async (req, res) => {
+  try {
+    // req.user is set by authGuard
+    const userId = req.user.userId;
+    
+
+    if (!userId) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found in token",
+      });
+    }
+
+    // Optionally, fetch user info from DB if needed
+    // const user = await User.findByPk(userId);
+
+    return res.status(200).json({
+      success: true,
+      userId, // this is the UUID from your database
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to get user info",
       error: error.message,
     });
   }
