@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
-import Login from './pages/auth/Login';
-import Register from './pages/auth/Register';
-import { ScrollToTop, NotFound } from './components/Elements';
+import Login from './pages/Login';
+import Register from './pages/Register';
+import './App.css'
+import QuizPage from './pages/Quizpage';
 
 
 function AppWrapper() {
@@ -13,10 +14,10 @@ function AppWrapper() {
     <>
       <Toaster position='top-right' />
       <Routes>
-        
-        {/* --- AUTH ROUTES (No Navbar/Footer) --- */}
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<Register />} />
+           
+           <Route path="/login" element={<Login/>} />   
+           <Route path="/" element={<Register/>} />
+           <Route path="/quiz" element={<QuizPage/>} />   
 
         {/* fallout */}
         <Route path="*" element={<NotFound />} />
