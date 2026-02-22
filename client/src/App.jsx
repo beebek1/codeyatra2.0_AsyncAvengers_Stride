@@ -6,22 +6,34 @@ import Register from './pages/Register';
 import './App.css'
 import QuizPage from './pages/Quizpage';
 
-function App() {
+
+function AppWrapper() {
+  const role = "org"; 
 
   return (
-   <Router>
-      <Toaster/>
-
+    <>
+      <Toaster position='top-right' />
       <Routes>
            
            <Route path="/login" element={<Login/>} />   
            <Route path="/" element={<Register/>} />
            <Route path="/quiz" element={<QuizPage/>} />   
 
+        {/* fallout */}
+        <Route path="*" element={<NotFound />} />
       </Routes>
-
+    </>
+  );
+}
+function App() {
+  return (
+    <Router>
+      <ScrollToTop />
+      <div className="bg-[#080808] min-h-screen text-white">
+        <AppWrapper />
+      </div>
     </Router>
-  )
+  );
 }
 
 export default App
