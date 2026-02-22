@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 
 // Pages
@@ -19,19 +19,22 @@ import Footer from './components/Footer';
 
 function AppWrapper() {
 
+  const location = useLocation();
+  const hideComponents = location.pathname === '/register' || location.pathname === '/forgot-password' || location.pathname === '/login'
+
   return (
     // Added flex flex-col and min-h-screen to push the footer to the bottom
     <div className="flex flex-col min-h-screen w-full">
       <Toaster position='top-right' />
-      <Navbar/>
+      { !hideComponents && <Navbar/> }
       <Routes>
            
-           <Route path="/signin" element={<Login/>} />   
-           <Route path="/signup" element={<Register/>} />
+           <Route path="/login" element={<Login/>} />   
+           <Route path="/register" element={<Register/>} />
            <Route path="/quiz" element={<QuizPage/>} />   
            <Route path="/" element={<Dashboard/>} />
            <Route path="/forgot-password" element={<ForgotPassword/>} />
-           <Route path="/career" element={<CareersPage/>} />
+           <Route path="/careers" element={<CareersPage/>} />
            <Route path="/schedule" element={<Schedule/>} />
            <Route path="/account" element={<Account />} />
 
@@ -39,7 +42,7 @@ function AppWrapper() {
           <Route path="*" element={<NotFound />} />
       </Routes>
 
-      <Footer />
+      { !hideComponents && <Footer />}
     </div>
   );
 }
