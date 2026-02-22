@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { addUserInterests, getMe } from "../services/api"; // path to your api.js
 
 const questions = [
   {
@@ -28,6 +29,9 @@ const questions = [
   },
 ];
 
+
+
+
 const QuizPage = () => {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState({
@@ -50,18 +54,30 @@ const QuizPage = () => {
     }));
   };
 
-  const handleNext = () => {
+  const educationMap = {
+  "Under High School": "under_high_school",
+  "High School": "high_school",
+  "Undergraduate": "undergraduate",
+  "Graduate": "graduate"
+};
+
+
+  const handleNext = async () => {
     if (isLastQuestion) {
-      const formData = new FormData();
-      formData.append('education', answers.education);
-      formData.append('interest', answers.interest);
+      try {
+        const backendEducation = educationMap[answers.education];
 
-      console.log("--- Form Data Submitted ---");
-      for (let [key, value] of formData.entries()) {
-        console.log(`${key}: ${value}`);
+        await addUserInterests(
+          [answers.interest],  // interests array
+          backendEducation
+        );
+
+        alert("Quiz submitted successfully!");
+        navigate("/dashboard"); // redirect after submit
+      } catch (error) {
+        console.error("Failed to submit quiz:", error);
+        alert("Failed to submit quiz. Try again.");
       }
-
-      alert("Quiz Submitted! Check console for FormData.");
     } else {
       setCurrentQuestionIndex((prev) => prev + 1);
     }

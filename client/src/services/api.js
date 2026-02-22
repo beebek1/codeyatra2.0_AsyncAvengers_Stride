@@ -24,3 +24,24 @@ const config = {
 
 export const registerUser = (data) => Api.post("/api/auth/register", data);
 export const loginUser = (data) => Api.post("/api/auth/login", data);
+export const getMe = () => Api.get("/api/auth/getme", config);
+
+export const addUserInterests = (interests, educationLevel, description = "") => {
+  return Api.post(
+    "/api/interest",
+    {
+      interests,
+      educationLevel,
+      description,
+    },
+    {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+    }
+  );
+};
+
+export const getUserInterests = (userId) => {
+  return Api.get(`/api/interest/${userId}`, config);
+};
