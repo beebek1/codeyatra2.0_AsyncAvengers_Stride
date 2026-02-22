@@ -1,86 +1,131 @@
-import React, { useEffect } from 'react';
+import{ useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaHome, FaUndo, FaSearch } from 'react-icons/fa';
 import { useLocation } from "react-router-dom";
-
 
 //url not matched
 const NotFound = () => {
   const navigate = useNavigate();
+  const [glitch, setGlitch] = useState(false);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setGlitch(true);
+      setTimeout(() => setGlitch(false), 150);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
-    <div className="min-h-screen bg-[#080808] flex items-center justify-center p-8 overflow-hidden relative">
-      
-      {/* Cinematic Background Elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-[#d4af37]/5 blur-[120px] rounded-full animate-pulse"></div>
-        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-[#d4af37]/5 blur-[120px] rounded-full animate-pulse" style={{ animationDelay: '2s' }}></div>
-        
-        {/* Grainy Film Texture Overlay */}
-        <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/stardust.png')]"></div>
-      </div>
+    <div className="min-h-screen bg-white flex items-center justify-center p-8 overflow-hidden relative font-mono">
 
-      <div className="max-w-2xl w-full text-center relative z-10">
-        {/* Big Glitchy 404 Text */}
-        <div className="relative inline-block mb-8">
-          <h1 className="text-white/[0.03] text-[180px] md:text-[250px] font-black leading-none select-none tracking-tighter">
-            404
-          </h1>
-          <div className="absolute inset-0 flex items-center justify-center">
-            <h2 className="text-7xl md:text-9xl font-black text-white tracking-tighter uppercase italic">
-              Lost <span className="text-[#d4af37]">Reel</span>
-            </h2>
-          </div>
+      {/* Subtle grid background */}
+      <div
+        className="absolute inset-0 pointer-events-none opacity-[0.04]"
+        style={{
+          backgroundImage:
+            "linear-gradient(#000 1px, transparent 1px), linear-gradient(90deg, #000 1px, transparent 1px)",
+          backgroundSize: "40px 40px",
+        }}
+      />
+
+      {/* Corner accents */}
+      <div className="absolute top-8 left-8 w-6 h-6 border-t-2 border-l-2 border-black" />
+      <div className="absolute top-8 right-8 w-6 h-6 border-t-2 border-r-2 border-black" />
+      <div className="absolute bottom-8 left-8 w-6 h-6 border-b-2 border-l-2 border-black" />
+      <div className="absolute bottom-8 right-8 w-6 h-6 border-b-2 border-r-2 border-black" />
+
+      <div className="max-w-xl w-full text-center relative z-10">
+
+        {/* Stage label */}
+        <div className="inline-flex items-center gap-2 border border-black/10 bg-black/[0.03] px-4 py-1.5 rounded-full mb-10">
+          <span className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-black opacity-30" />
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-black" />
+          </span>
+          <span className="text-[9px] font-black tracking-[0.35em] uppercase text-black/50">
+            Route Not Found
+          </span>
         </div>
 
-        <div className="space-y-6">
-          <div className="inline-flex items-center space-x-2 bg-[#d4af37]/10 text-[#d4af37] px-4 py-1.5 rounded-full text-[10px] font-black tracking-[0.3em] uppercase mb-4 border border-[#d4af37]/20">
-             <span className="relative flex h-2 w-2 mr-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#d4af37] opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#d4af37]"></span>
-             </span>
-             Scene Not Found
+        {/* 404 block */}
+        <div className="relative mb-6 select-none">
+          {/* Ghost number */}
+          <div className="text-[160px] md:text-[220px] font-black leading-none tracking-tighter text-black/[0.04]">
+            404
           </div>
 
-          <p className="text-gray-500 text-xs font-bold tracking-widest uppercase max-w-sm mx-auto leading-relaxed">
-            The page you are looking for has been cut from the final edit or never existed in the script.
-          </p>
-
-          {/* Action Buttons */}
-          <div className="flex flex-col md:flex-row items-center justify-center gap-4 mt-12">
-            <button 
-              onClick={() => navigate(-1)}
-              className="w-full md:w-auto flex items-center justify-center gap-3 px-8 py-4 bg-white/5 border border-white/10 text-white rounded-2xl text-[10px] font-black tracking-[0.2em] uppercase hover:bg-white/10 transition-all cursor-pointer group"
-            >
-              <FaUndo className="group-hover:-rotate-45 transition-transform" /> Rewind
-            </button>
-
-            <button 
-              onClick={() => navigate('/')}
-              className="w-full md:w-auto flex items-center justify-center gap-3 px-10 py-4 bg-[#d4af37] text-black rounded-2xl text-[10px] font-black tracking-[0.2em] uppercase hover:scale-105 transition-all shadow-xl shadow-[#d4af37]/10 cursor-pointer"
-            >
-              <FaHome size={14} /> Back to Lobby
-            </button>
-          </div>
-
-          {/* Search Suggestion */}
-          <div className="pt-12">
-            <p className="text-gray-600 text-[9px] font-black tracking-[0.3em] uppercase mb-4">Or try searching for a movie</p>
-            <div className="relative max-w-xs mx-auto group">
-              <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-700 group-focus-within:text-[#d4af37] transition-colors" />
-              <input 
-                type="text" 
-                placeholder="SEARCH TITLES..."
-                className="w-full bg-white/[0.02] border border-white/5 rounded-xl py-3 pl-12 pr-4 text-[10px] font-black tracking-widest outline-none focus:border-[#d4af37]/50 transition-all text-white placeholder:text-gray-800"
-              />
+          {/* Overlay real text */}
+          <div className="absolute inset-0 flex flex-col items-center justify-center">
+            <div className="relative">
+              <h1
+                className={`text-6xl md:text-8xl font-black tracking-tighter text-black uppercase transition-all duration-75 ${
+                  glitch ? "translate-x-[3px] opacity-80" : ""
+                }`}
+              >
+                Dead End
+              </h1>
+              {/* glitch layer */}
+              {glitch && (
+                <h1 className="absolute inset-0 text-6xl md:text-8xl font-black tracking-tighter text-black/30 uppercase translate-x-[-4px] translate-y-[2px]">
+                  Dead End
+                </h1>
+              )}
             </div>
           </div>
         </div>
+
+        {/* Divider */}
+        <div className="flex items-center gap-4 mb-8 max-w-xs mx-auto">
+          <div className="flex-1 h-px bg-black/10" />
+          <span className="text-[9px] font-black tracking-[0.3em] uppercase text-black/30">
+            Stage 0 of 4
+          </span>
+          <div className="flex-1 h-px bg-black/10" />
+        </div>
+
+        <p className="text-black/40 text-[11px] font-bold tracking-widest uppercase max-w-xs mx-auto leading-relaxed mb-12">
+          This page was never part of the roadmap. It does not exist in any stage.
+        </p>
+
+        {/* Buttons */}
+        <div className="flex flex-col md:flex-row items-center justify-center gap-3">
+          <button
+            onClick={() => navigate(-1)}
+            className="w-full md:w-auto px-8 py-4 border border-black/15 bg-black/[0.03] text-black rounded-lg text-[10px] font-black tracking-[0.25em] uppercase hover:bg-black/[0.07] transition-colors cursor-pointer"
+          >
+            Go Back
+          </button>
+
+          <button
+            onClick={() => navigate("/")}
+            className="w-full md:w-auto px-10 py-4 bg-black text-white rounded-lg text-[10px] font-black tracking-[0.25em] uppercase hover:bg-gray-800 transition-colors cursor-pointer"
+          >
+            Back to Home
+          </button>
+        </div>
+
+        {/* Progress bar decoration */}
+        <div className="mt-16 max-w-xs mx-auto">
+          <div className="flex justify-between mb-2">
+            <span className="text-[9px] font-black tracking-widest uppercase text-black/30">
+              Your Progress
+            </span>
+            <span className="text-[9px] font-black tracking-widest uppercase text-black/30">
+              0%
+            </span>
+          </div>
+          <div className="w-full h-1 bg-black/5 rounded-full overflow-hidden">
+            <div className="h-full w-0 bg-black rounded-full" />
+          </div>
+          <p className="text-[9px] font-black tracking-widest uppercase text-black/20 mt-2">
+            No stage selected
+          </p>
+        </div>
       </div>
 
-      {/* Footer Branding */}
-      <div className="absolute bottom-10 text-[10px] font-black tracking-[0.5em] text-white/10 uppercase select-none">
-        CineChips Interactive Entertainment
+      {/* Footer */}
+      <div className="absolute bottom-10 text-[9px] font-black tracking-[0.5em] text-black/15 uppercase select-none">
+        Stride — Async Avengers
       </div>
     </div>
   );
