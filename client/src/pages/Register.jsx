@@ -42,69 +42,69 @@ const RegisterPage = () => {
           <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
             
             {/* Full Name */}
-            <div>
-              <label className="text-sm font-medium text-gray-900 mb-1 block">
+            <div className="flex flex-col items-start">
+              <label className="text-sm font-medium text-gray-900 mb-1 text-left w-full">
                 Full Name
               </label>
               <input
                 type="text"
-                placeholder="John Doe"
+                placeholder="Enter your full name"
                 className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-black focus:border-black"
               />
             </div>
 
             {/* Email */}
-            <div>
-              <label className="text-sm font-medium text-gray-900 mb-1 block">
+            <div className="flex flex-col items-start">
+              <label className="text-sm font-medium text-gray-900 mb-1 text-left w-full">
                 Email
               </label>
               <input
                 type="email"
-                placeholder="you@example.com"
+                placeholder="Enter your email address"
                 className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-black focus:border-black"
               />
             </div>
 
             {/* Password */}
-            <div>
-              <label className="text-sm font-medium text-gray-900 mb-1 block">
+            <div className="flex flex-col items-start">
+            <label className="text-sm font-medium text-gray-900 mb-1 text-left w-full">
                 Password
-              </label>
-              <div className="relative">
+            </label>
+            <div className="relative w-full">
                 <input
-                  type={showPassword ? "text" : "password"}
-                  placeholder="••••••••"
-                  className="w-full px-3 py-2 pr-10 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-black focus:border-black"
+                type={showPassword ? "text" : "password"}
+                placeholder="********"
+                className="w-full px-3 py-2 pr-10 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-black focus:border-black"
                 />
                 <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-black"
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-black"
                 >
-                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
-              </div>
+            </div>
             </div>
 
             {/* Confirm Password */}
-            <div>
-              <label className="text-sm font-medium text-gray-900 mb-1 block">
+            <div className="flex flex-col items-start">
+            <label className="text-sm font-medium text-gray-900 mb-1 text-left w-full">
                 Confirm Password
-              </label>
-              <div className="relative">
+            </label>
+            <div className="relative w-full">
                 <input
-                  type={showConfirmPassword ? "text" : "password"}
-                  placeholder="••••••••"
-                  className="w-full px-3 py-2 pr-10 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-black focus:border-black"
+                type={showConfirmPassword ? "text" : "password"}
+                placeholder="********"
+                className="w-full px-3 py-2 pr-10 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-black focus:border-black"
                 />
                 <button
-                  type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-black"
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-black"
                 >
-                  {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
-              </div>
+            </div>
             </div>
 
             {/* Terms */}
