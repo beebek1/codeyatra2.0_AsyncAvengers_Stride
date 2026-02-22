@@ -9,6 +9,7 @@ import Dashboard from './pages/Dashboard';
 import ForgotPassword from './pages/auth/ForgotPassword';
 import QuizPage from './pages/Quizpage'; 
 import Account from './pages/Account';
+import Roadmap from './pages/Roadmap';
 
 // Components
 import { ScrollToTop, NotFound } from './components/Elements';
@@ -30,7 +31,13 @@ function AppWrapper() {
           <Route path="/quiz" element={<QuizPage/>} />   
           <Route path="/dashboard" element={<Dashboard/>} />
           <Route path="/forgot-password" element={<ForgotPassword/>} />
-          <Route path="/account" element={<Account />} />
+          <Route path="/account" element={<Account/>} />
+          {/* --- NEW ROADMAP ROUTES --- */}
+          <Route path="/roadmap" element={<Roadmap/>} />
+          {/* Placeholders for the individual level pages so your demo doesn't break */}
+          <Route path="/roadmap/beginner" element={<div className="p-20 text-center text-3xl font-black uppercase">Beginner Content</div>} />
+          <Route path="/roadmap/intermediate" element={<div className="p-20 text-center text-3xl font-black uppercase text-[#f5c842]">Intermediate Content</div>} />
+          <Route path="/roadmap/advanced" element={<div className="p-20 text-center text-3xl font-black uppercase">Advanced Content</div>} />
 
           {/* fallout */}
           <Route path="*" element={<NotFound />} />
@@ -47,7 +54,6 @@ function App() {
   return (
     <Router>
       <ScrollToTop />
-      {/* Removed bg-[#080808] from here so your individual pages (like the white Quiz page) can dictate their own background colors without conflict */}
       <div className="min-h-screen font-sans text-gray-900">
         <AppWrapper />
       </div>
