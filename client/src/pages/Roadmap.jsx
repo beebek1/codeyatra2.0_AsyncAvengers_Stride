@@ -1,27 +1,25 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Lock, CheckCircle, Play } from 'lucide-react';
+import Kanban from '../components/Kanban';
+
+const PANEL_WIDTH = 420;
 
 export default function RoadmapPage() {
-  const navigate = useNavigate();
-
-  // Initial progress state. 
-  // Note: To update this from your sub-pages (/roadmap/beginner), 
-  // you will eventually need to lift this state to a Context or use Redux/Zustand.
   const [progress, setProgress] = useState({
     beginner: 0,
     intermediate: 0,
-    advanced: 0
+    advanced: 0,
   });
 
-  // Roadmap Configuration
+  const [activePanel, setActivePanel] = useState(null);
+
   const levels = [
-    { id: 'beginner', title: 'Beginner Phase', align: 'left', path: '/roadmap/beginner' },
-    { id: 'intermediate', title: 'Intermediate Phase', align: 'right', path: '/roadmap/intermediate' },
-    { id: 'advanced', title: 'Advanced Phase', align: 'left', path: '/roadmap/advanced' },
+    { id: 'beginner', title: 'Beginner Phase', align: 'left' },
+    { id: 'intermediate', title: 'Intermediate Phase', align: 'right' },
+    { id: 'advanced', title: 'Advanced Phase', align: 'left' },
   ];
 
-  // Logic to determine if a level is unlocked
   const checkUnlocked = (id) => {
     if (id === 'beginner') return true;
     if (id === 'intermediate') return progress.beginner === 100;
@@ -30,189 +28,209 @@ export default function RoadmapPage() {
   };
 
   const isFullyCompleted = progress.advanced === 100;
+  const panelOpen = activePanel !== null;
+
+  const openPanel = (levelId) => setActivePanel(levelId);
+  const closePanel = () => setActivePanel(null);
+
+  const handleLevelComplete = (levelId) => {
+    setProgress(prev => ({ ...prev, [levelId]: 100 }));
+    setActivePanel(null);
+  };
 
   return (
-    // Strict Full-screen, no scroll layout
-    <div className="h-screen w-screen overflow-hidden bg-[#ffffff] flex flex-col font-sans text-[#000000] selection:bg-[#f5c842] selection:text-black">
-      
-      {/* Header Section */}
-      <header className="h-24 md:h-32 flex-shrink-0 flex flex-col items-center justify-end pb-4 md:pb-8 z-20">
-        {isFullyCompleted ? (
-          <div className="animate-in fade-in zoom-in flex items-center gap-2 px-6 py-3 bg-[#000000] text-[#f5c842] rounded-full font-black tracking-widest uppercase text-sm shadow-xl">
-            <CheckCircle size={18} />
-            <span>100% Roadmap Completed</span>
-          </div>
-        ) : (
-          <h1 className="text-3xl md:text-4xl font-black tracking-tighter uppercase">
-            Career Roadmap
-          </h1>
-        )}
-      </header>
+    // Flex row: map on left, kanban panel on right. Both sit in normal flow.
+    <div className="min-h-screen w-full bg-[#fafafa] flex flex-row overflow-hidden font-sans text-gray-900 selection:bg-[#f5c842] selection:text-black">
 
-      {/* Snake Roadmap Container */}
-      <main className="flex-1 w-full max-w-4xl mx-auto flex flex-col justify-center px-4 sm:px-8 pb-12 z-10">
-        {levels.map((level, i) => {
-          const isUnlocked = checkUnlocked(level.id);
-          const currentProgress = progress[level.id];
-          const isCompleted = currentProgress === 100;
+      {/* Roadmap — flex-1 so it shrinks when Kanban panel takes space */}
+      <div className="flex-1 flex flex-col min-h-screen overflow-y-auto transition-all duration-500">
 
-          return (
-            <div key={level.id} className="relative w-full flex flex-col">
-              
-              {/* SVG S-Curve connecting from the PREVIOUS level */}
-              {i > 0 && (
-                <SnakeCurve 
-                  direction={level.align === 'right' ? 'left-to-right' : 'right-to-left'} 
-                  isUnlocked={isUnlocked} 
-                />
-              )}
-
-              {/* 2-Column Grid for precise geometric alignment */}
-              <div className="grid grid-cols-2 w-full relative z-10">
-                
-                {level.align === 'left' ? (
-                  <>
-                    {/* Card on Left */}
-                    <div className="col-span-1 flex flex-col items-center px-2 sm:px-6">
-                      <NodeIcon isUnlocked={isUnlocked} isCompleted={isCompleted} />
-                      <RoadmapCard 
-                        level={level} 
-                        isUnlocked={isUnlocked} 
-                        currentProgress={currentProgress} 
-                        isCompleted={isCompleted} 
-                        onClick={() => isUnlocked && navigate(level.path)}
-                      />
-                    </div>
-                    {/* Empty Right Column */}
-                    <div className="col-span-1" />
-                  </>
-                ) : (
-                  <>
-                    {/* Empty Left Column */}
-                    <div className="col-span-1" />
-                    {/* Card on Right */}
-                    <div className="col-span-1 flex flex-col items-center px-2 sm:px-6">
-                      <NodeIcon isUnlocked={isUnlocked} isCompleted={isCompleted} />
-                      <RoadmapCard 
-                        level={level} 
-                        isUnlocked={isUnlocked} 
-                        currentProgress={currentProgress} 
-                        isCompleted={isCompleted} 
-                        onClick={() => isUnlocked && navigate(level.path)}
-                      />
-                    </div>
-                  </>
-                )}
-              </div>
+        <header className="h-32 md:h-48 flex-shrink-0 flex flex-col items-center justify-center z-20">
+          {isFullyCompleted ? (
+            <div className="animate-bounce flex items-center gap-2 px-6 py-3 bg-white border border-gray-100 text-black rounded-full font-bold tracking-wider uppercase text-sm shadow-[0_8px_30px_rgb(245,200,66,0.2)]">
+              <CheckCircle size={20} strokeWidth={2.5} className="text-[#f5c842]" />
+              <span>Roadmap Completed</span>
             </div>
-          );
-        })}
-      </main>
+          ) : (
+            <div className="text-center">
+              <h1 className="text-4xl md:text-5xl font-black tracking-tighter uppercase text-gray-900">
+                Your Path
+              </h1>
+              <p className="text-[10px] font-bold tracking-[0.4em] text-gray-400 uppercase mt-2">
+                Level by Level Mastery
+              </p>
+            </div>
+          )}
+        </header>
+
+        <main className="flex-1 w-full max-w-4xl mx-auto flex flex-col px-4 sm:px-8 pb-20 z-10">
+          {levels.map((level, i) => {
+            const isUnlocked = checkUnlocked(level.id);
+            const currentProgress = progress[level.id];
+            const isCompleted = currentProgress === 100;
+            const isActive = activePanel === level.id;
+
+            return (
+              <div key={level.id} className="relative w-full flex flex-col">
+
+                {i > 0 && (
+                  <SnakeCurve
+                    direction={level.align === 'right' ? 'left-to-right' : 'right-to-left'}
+                    isUnlocked={isUnlocked}
+                  />
+                )}
+
+                <div className="grid grid-cols-2 w-full relative z-10">
+                  {level.align === 'left' ? (
+                    <>
+                      <div className="col-span-1 flex flex-col items-center px-2 sm:px-6 relative">
+                        <RoadmapCard
+                          level={level}
+                          isUnlocked={isUnlocked}
+                          currentProgress={currentProgress}
+                          isCompleted={isCompleted}
+                          isFirst={i === 0}
+                          isActive={isActive}
+                          onClick={() => isUnlocked && openPanel(level.id)}
+                        />
+                      </div>
+                      <div className="col-span-1" />
+                    </>
+                  ) : (
+                    <>
+                      <div className="col-span-1" />
+                      <div className="col-span-1 flex flex-col items-center px-2 sm:px-6 relative">
+                        <RoadmapCard
+                          level={level}
+                          isUnlocked={isUnlocked}
+                          currentProgress={currentProgress}
+                          isCompleted={isCompleted}
+                          isFirst={i === 0}
+                          isActive={isActive}
+                          onClick={() => isUnlocked && openPanel(level.id)}
+                        />
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </main>
+      </div>
+
+      {/* Kanban panel — in normal flow on the right, animates width 0 → PANEL_WIDTH */}
+      <AnimatePresence initial={false}>
+        {panelOpen && (
+          <motion.div
+            key="kanban-panel"
+            initial={{ width: 0 }}
+            animate={{ width: PANEL_WIDTH }}
+            exit={{ width: 0 }}
+            transition={{ type: 'spring', stiffness: 280, damping: 32 }}
+            className="flex-shrink-0 h-screen sticky top-0 overflow-hidden border-l border-gray-100 shadow-2xl bg-white z-30"
+            style={{ minWidth: 0 }}
+          >
+            {/* Inner div fixed at full panel width so content doesn't squish during animation */}
+            <div style={{ width: PANEL_WIDTH }} className="h-full">
+              <Kanban
+                levelId={activePanel}
+                onClose={closePanel}
+                onLevelComplete={handleLevelComplete}
+              />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
 
-// ----------------------------------------------------------------------
-// Sub-Components
-// ----------------------------------------------------------------------
-
-// 1. The Geometrically Perfect S-Curve SVG
 const SnakeCurve = ({ direction, isUnlocked }) => {
-  // SVG spans exactly 50% of the container (from col 1 center to col 2 center)
-  const pathD = direction === 'left-to-right' 
-    ? "M 0,0 C 0,50 100,50 100,100" 
-    : "M 100,0 C 100,50 0,50 0,100";
-    
+  const pathD = direction === 'left-to-right'
+    ? "M 0,0 C 0,75 100,25 100,100"
+    : "M 100,0 C 100,75 0,25 0,100";
+
   return (
-    <div className="w-full h-10 md:h-16 flex -my-1 relative z-0 pointer-events-none">
-      <svg 
-        className="absolute w-1/2 h-full top-0 left-[25%]" 
-        viewBox="0 0 100 100" 
-        preserveAspectRatio="none"
-      >
-        <path 
-          d={pathD} 
-          fill="none" 
-          stroke={isUnlocked ? "#f5c842" : "#e5e7eb"} 
-          strokeWidth="4" 
-          strokeDasharray={isUnlocked ? "none" : "8 8"}
-          strokeLinecap="round"
-          className="transition-all duration-1000 ease-in-out"
-        />
+    <div className="w-full h-24 md:h-32 flex -mt-7 -mb-7 relative z-0 pointer-events-none">
+      <svg className="absolute w-1/2 h-full top-0 left-[25%]" viewBox="0 0 100 100" preserveAspectRatio="none">
+        <path d={pathD} fill="none" stroke={isUnlocked ? "#000000" : "#d1d5db"} strokeWidth="20" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
+        <path d={pathD} fill="none" stroke={isUnlocked ? "#f5c842" : "transparent"} strokeWidth="4" strokeDasharray="10 10" strokeLinecap="round" vectorEffect="non-scaling-stroke" className="opacity-60" />
       </svg>
     </div>
   );
 };
 
-// 2. The Status Node (Circle connecting the lines)
-const NodeIcon = ({ isUnlocked, isCompleted }) => (
-  <div className={`w-8 h-8 rounded-full border-[3px] flex items-center justify-center mb-3 z-10 bg-white transition-all duration-500 shadow-sm
-    ${isCompleted ? 'border-[#000000] text-[#000000]' : isUnlocked ? 'border-[#f5c842] text-[#f5c842]' : 'border-gray-200 text-gray-300'}
-  `}>
-    {isCompleted ? (
-      <CheckCircle size={16} strokeWidth={4} />
-    ) : (
-      <div className={`w-2.5 h-2.5 rounded-full transition-colors duration-500 ${isUnlocked ? 'bg-[#f5c842]' : 'bg-gray-200'}`} />
-    )}
-  </div>
-);
-
-// 3. The Minimalist Data Card
-function RoadmapCard({ level, isUnlocked, currentProgress, isCompleted, onClick }) {
+function RoadmapCard({ level, isUnlocked, currentProgress, isCompleted, isFirst, isActive, onClick }) {
   return (
-    <div
-      onClick={onClick}
-      className={`w-full max-w-sm rounded-2xl p-5 md:p-6 border transition-all duration-300 relative group
-        ${isUnlocked 
-          ? 'bg-[#ffffff] border-gray-200 cursor-pointer hover:border-[#000000] hover:shadow-[0_12px_40px_rgba(0,0,0,0.08)] hover:-translate-y-1' 
-          : 'bg-gray-50 border-gray-100 opacity-50 cursor-not-allowed'
-        }`}
-    >
-      <div className="flex items-start justify-between mb-5">
-        <h3 className="text-lg md:text-xl font-black text-[#000000] tracking-tight uppercase">{level.title}</h3>
-        
-        {/* Status Badge */}
-        <div className={`px-2.5 py-1 text-[9px] font-black uppercase tracking-widest rounded-full flex items-center gap-1.5 border
-          ${!isUnlocked 
-            ? 'bg-gray-100 border-gray-200 text-gray-500' 
-            : isCompleted 
-              ? 'bg-black border-black text-[#f5c842]' 
-              : 'bg-white border-[#f5c842] text-black'
-          }`}
-        >
-          {!isUnlocked && <Lock size={10} strokeWidth={3} />}
-          {isCompleted && <CheckCircle size={10} strokeWidth={3} />}
-          {!isUnlocked ? 'Locked' : isCompleted ? 'Done' : 'Active'}
-        </div>
-      </div>
+    <div className={`w-full max-w-sm relative ${isFirst ? 'pt-0' : 'pt-8'}`}>
 
-      {/* Progress Bar Rendering */}
-      <div className="mt-2">
-        <div className="flex justify-between text-xs font-bold text-gray-500 tracking-wider uppercase mb-2">
-          <span>Progress</span>
-          <span className={isUnlocked ? 'text-black' : ''}>{currentProgress}%</span>
-        </div>
-        <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
+      {!isFirst && (
+        <div className="absolute -top-7 left-1/2 -translate-x-1/2 z-20">
           <div
-            className="h-full bg-[#f5c842] rounded-full transition-all duration-1000 ease-out relative"
-            style={{ width: `${currentProgress}%` }}
+            className={`w-14 h-14 rounded-full border-[5px] flex items-center justify-center bg-white transition-all duration-500
+              ${isCompleted
+                ? 'border-black shadow-lg'
+                : isUnlocked
+                  ? 'border-[#f5c842] shadow-[0_0_25px_rgba(245,200,66,0.4)]'
+                  : 'border-gray-300 shadow-sm'
+              }`}
           >
-            {/* Shimmer effect on active bar */}
-            {isUnlocked && !isCompleted && (
-               <div className="absolute top-0 left-0 w-full h-full bg-white/30 animate-pulse" />
-            )}
+            {isCompleted
+              ? <CheckCircle size={22} strokeWidth={3} className="text-black" />
+              : isUnlocked
+                ? <div className="w-4 h-4 rounded-full bg-[#f5c842] animate-pulse" />
+                : <Lock size={18} strokeWidth={2.5} className="text-gray-400" />
+            }
           </div>
         </div>
-      </div>
-
-      {/* Hover visual cue for unlocked cards */}
-      {isUnlocked && (
-        <div className="absolute right-6 bottom-6 opacity-0 group-hover:opacity-100 transition-all duration-300 -translate-x-2 group-hover:translate-x-0">
-           <div className="w-8 h-8 rounded-full bg-black flex items-center justify-center text-[#f5c842]">
-             {isCompleted ? <CheckCircle size={16} /> : <Play size={14} className="ml-0.5" />}
-           </div>
-        </div>
       )}
+
+      <div
+        onClick={onClick}
+        className={`w-full rounded-[2.5rem] p-8 transition-all duration-500 relative group z-10
+          ${!isFirst ? 'pt-12' : ''}
+          ${isActive
+            ? 'bg-white border-2 border-black shadow-2xl scale-[1.02] cursor-pointer'
+            : isCompleted
+              ? 'bg-white border-2 border-black cursor-pointer shadow-sm hover:-translate-y-2 hover:shadow-2xl'
+              : isUnlocked
+                ? 'bg-white border-2 border-[#f5c842] cursor-pointer shadow-sm hover:-translate-y-2 hover:shadow-2xl'
+                : 'bg-gray-50 border-2 border-gray-300 cursor-not-allowed opacity-70'
+          }`}
+      >
+        <div className="flex items-start justify-between mb-8">
+          <h3 className={`text-2xl font-black tracking-tighter uppercase leading-none ${!isUnlocked ? 'text-gray-400' : 'text-gray-900'}`}>
+            {level.title}
+          </h3>
+          <div className={`px-4 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-full
+            ${!isUnlocked ? 'bg-gray-200 text-gray-400' : isCompleted ? 'bg-black text-[#f5c842]' : 'bg-[#f5c842] text-black'}
+          `}>
+            {isCompleted ? 'Done' : isUnlocked ? 'Open' : 'Locked'}
+          </div>
+        </div>
+
+        <div>
+          <div className="flex justify-between text-[10px] font-black tracking-widest uppercase mb-3">
+            <span className="text-gray-400">Completion</span>
+            <span className={!isUnlocked ? 'text-gray-400' : 'text-black'}>{currentProgress}%</span>
+          </div>
+          <div className={`w-full h-3 rounded-full overflow-hidden ${!isUnlocked ? 'bg-gray-200' : 'bg-gray-100'}`}>
+            <div
+              className={`h-full rounded-full transition-all duration-1000 ${!isUnlocked ? 'bg-gray-300' : 'bg-[#f5c842]'}`}
+              style={{ width: `${currentProgress}%` }}
+            />
+          </div>
+        </div>
+
+        {isUnlocked && !isActive && (
+          <div className="absolute right-6 bottom-6 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-x-4 group-hover:translate-x-0">
+            <div className="w-12 h-12 rounded-full bg-black flex items-center justify-center text-[#f5c842] shadow-xl">
+              <Play size={18} fill="currentColor" className="ml-1" />
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
