@@ -12,6 +12,7 @@ import { ScrollToTop , NotFound} from './components/Elements';
 import CareersPage from './pages/Career';
 import Schedule from './pages/Schedule';
 import Kanban from './components/Kanban';
+import ProtectedRoute from './protected/ProtectedROute';
 
 import Account from './pages/Account';
 
@@ -33,13 +34,16 @@ function AppWrapper() {
            
            <Route path="/login" element={<Login/>} />   
            <Route path="/register" element={<Register/>} />
-           <Route path="/quiz" element={<QuizPage/>} />   
+   
            <Route path="/" element={<Dashboard/>} />
            <Route path="/forgot-password" element={<ForgotPassword/>} />
            <Route path="/careers" element={<CareersPage/>} />
-           <Route path="/schedule" element={<Schedule/>} />
-           <Route path="/kanban" element={<Kanban/>} />
-          <Route path="/account" element={<Account />} />
+
+            {/* Protected routes */}
+          <Route path="/quiz" element={<ProtectedRoute element={<QuizPage />} />} />
+          <Route path="/schedule" element={<ProtectedRoute element={<Schedule />} />} />
+          <Route path="/kanban" element={<ProtectedRoute element={<Kanban />} />} />
+          <Route path="/account" element={<ProtectedRoute element={<Account />} />} />
 
         {/* fallout */}
         <Route path="*" element={<NotFound />} />
