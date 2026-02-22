@@ -1,37 +1,55 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import { Compass, Github, Twitter, Linkedin, Mail } from 'lucide-react';
+import React from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { Github, Twitter, Linkedin, Mail } from "lucide-react";
+import Logo from "../assets/logo_invert.png";
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
+  const navigate = useNavigate();
 
   return (
-    <footer className="bg-[#0a0a0a] text-gray-300 py-12 border-t border-gray-800 font-sans">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Top Section: Grid for Links and Newsletter */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
-          
-          {/* Column 1: Brand & Mission */}
-          <div className="col-span-1 md:col-span-1">
-            <Link to="/" className="flex items-center mb-4">
-              <Compass className="w-8 h-8 text-white mr-2" />
-              <span className="text-2xl font-bold text-white tracking-tight">Stride</span>
-            </Link>
-            <p className="text-sm leading-relaxed text-gray-400 mb-6">
-              Empowering students and professionals to navigate their careers with clarity, purpose, and data-driven roadmaps.
+    <footer className="bg-[#0b0b0c] text-gray-400 border-t border-gray-800">
+      <div className="max-w-7xl mx-auto px-6 lg:px-8 py-16">
+
+        {/* Top Section */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-y-12 gap-x-16">
+
+          {/* Brand Section */}
+          <div className="lg:col-span-2 max-w-sm">
+            <button
+              onClick={() => navigate("/")}
+              className="flex items-center mb-6"
+            >
+              <img
+                src={Logo}
+                alt="Stride"
+                className="h-6 w-auto object-contain"
+              />
+            </button>
+
+            <p className="text-sm leading-relaxed text-gray-500 mb-8">
+              Empowering students and professionals to navigate their careers
+              with clarity, purpose, and data-driven roadmaps.
             </p>
-            {/* Newsletter Signup (Visual only for hackathon) */}
+
+            {/* Newsletter */}
             <div>
-              <h3 className="text-sm font-semibold text-white uppercase tracking-wider mb-3">Stay Updated</h3>
-              <form className="flex" onSubmit={(e) => e.preventDefault()}>
+              <h3 className="text-sm font-bold text-white uppercase tracking-widest mb-4">
+                Stay Updated
+              </h3>
+
+              <form
+                className="flex rounded-md overflow-hidden bg-white"
+                onSubmit={(e) => e.preventDefault()}
+              >
                 <input
                   type="email"
                   placeholder="Enter your email"
-                  className="w-full px-3 py-2 text-sm text-gray-900 bg-white rounded-l-md focus:outline-none"
+                  className="w-full px-4 py-2 text-sm text-gray-800 focus:outline-none"
                 />
                 <button
                   type="submit"
-                  className="bg-white text-black hover:bg-gray-200 px-4 py-2 text-sm font-medium rounded-r-md transition-colors"
+                  className="bg-black text-white px-5 text-sm font-medium hover:bg-gray-900 transition"
                 >
                   Subscribe
                 </button>
@@ -39,74 +57,94 @@ const Footer = () => {
             </div>
           </div>
 
-          {/* Column 2: Product Links */}
+          {/* Product */}
           <div>
-            <h3 className="text-sm font-semibold text-white uppercase tracking-wider mb-4">Product</h3>
-            <ul className="space-y-3">
-              <li><Link to="/dashboard" className="text-base hover:text-white transition-colors">Features</Link></li>
-              <li><a href="#" className="text-base hover:text-white transition-colors">Roadmaps</a></li>
-              <li><a href="#" className="text-base hover:text-white transition-colors">Integrations</a></li>
-              <li><a href="#" className="text-base hover:text-white transition-colors">Pricing</a></li>
+            <h3 className="text-sm font-bold text-white uppercase tracking-widest mb-6">
+              Product
+            </h3>
+            <ul className="space-y-4 text-sm">
+              <li>
+                <Link to="/dashboard" className="hover:text-white transition">
+                  Features
+                </Link>
+              </li>
+              <li>
+                <a href="#" className="hover:text-white transition">
+                  Roadmaps
+                </a>
+              </li>
+              <li>
+                <a href="#" className="hover:text-white transition">
+                  Integrations
+                </a>
+              </li>
+              <li>
+                <a href="#" className="hover:text-white transition">
+                  Pricing
+                </a>
+              </li>
             </ul>
           </div>
 
-          {/* Column 3: Company Links */}
+          {/* Company */}
           <div>
-            <h3 className="text-sm font-semibold text-white uppercase tracking-wider mb-4">Company</h3>
-            <ul className="space-y-3">
-              <li><a href="#" className="text-base hover:text-white transition-colors">About Us</a></li>
-              <li><a href="#" className="text-base hover:text-white transition-colors">Blog</a></li>
-              <li><a href="#" className="text-base hover:text-white transition-colors">Careers</a></li>
-              <li><a href="#" className="text-base hover:text-white transition-colors">Contact</a></li>
+            <h3 className="text-sm font-bold text-white uppercase tracking-widest mb-6">
+              Company
+            </h3>
+            <ul className="space-y-4 text-sm">
+              <li><a href="#" className="hover:text-white transition">About</a></li>
+              <li><a href="#" className="hover:text-white transition">Blog</a></li>
+              <li><a href="#" className="hover:text-white transition">Careers</a></li>
+              <li><a href="#" className="hover:text-white transition">Contact</a></li>
             </ul>
           </div>
 
-          {/* Column 4: Resources Links */}
+          {/* Resources */}
           <div>
-            <h3 className="text-sm font-semibold text-white uppercase tracking-wider mb-4">Resources</h3>
-            <ul className="space-y-3">
-              <li><a href="#" className="text-base hover:text-white transition-colors">Documentation</a></li>
-              <li><a href="#" className="text-base hover:text-white transition-colors">Community</a></li>
-              <li><a href="#" className="text-base hover:text-white transition-colors">Support</a></li>
-              <li><a href="#" className="text-base hover:text-white transition-colors">API Status</a></li>
+            <h3 className="text-sm font-bold text-white uppercase tracking-widest mb-6">
+              Resources
+            </h3>
+            <ul className="space-y-4 text-sm">
+              <li><a href="#" className="hover:text-white transition">Documentation</a></li>
+              <li><a href="#" className="hover:text-white transition">Community</a></li>
+              <li><a href="#" className="hover:text-white transition">Support</a></li>
+              <li><a href="#" className="hover:text-white transition">API Status</a></li>
             </ul>
           </div>
+
         </div>
 
-        {/* Divider */}
-        <div className="border-t border-gray-800 pt-8 md:flex md:items-center md:justify-between">
-          
-          {/* Social Media Icons */}
-          <div className="flex space-x-6 md:order-2">
-            <a href="#" className="text-gray-400 hover:text-white">
-              <span className="sr-only">Twitter</span>
-              <Twitter className="w-6 h-6" />
+        {/* Bottom Section */}
+        <div className="border-t border-gray-800 mt-16 pt-8 flex flex-col md:flex-row items-center justify-between gap-6">
+
+          {/* Copyright */}
+          <div className="text-sm text-gray-500 text-center md:text-left">
+            © {currentYear} Stride, Inc. All rights reserved.
+          </div>
+
+          {/* Legal Links */}
+          <div className="flex space-x-6 text-sm text-gray-500">
+            <a href="#" className="hover:text-white transition">Privacy</a>
+            <a href="#" className="hover:text-white transition">Terms</a>
+            <a href="#" className="hover:text-white transition">Cookies</a>
+          </div>
+
+          {/* Social */}
+          <div className="flex space-x-5">
+            <a href="#" className="hover:text-white transition">
+              <Twitter className="w-5 h-5" />
             </a>
-            <a href="#" className="text-gray-400 hover:text-white">
-              <span className="sr-only">GitHub</span>
-              <Github className="w-6 h-6" />
+            <a href="#" className="hover:text-white transition">
+              <Github className="w-5 h-5" />
             </a>
-            <a href="#" className="text-gray-400 hover:text-white">
-              <span className="sr-only">LinkedIn</span>
-              <Linkedin className="w-6 h-6" />
+            <a href="#" className="hover:text-white transition">
+              <Linkedin className="w-5 h-5" />
             </a>
-            <a href="mailto:contact@stride.com" className="text-gray-400 hover:text-white">
-              <span className="sr-only">Email</span>
-              <Mail className="w-6 h-6" />
+            <a href="mailto:contact@stride.com" className="hover:text-white transition">
+              <Mail className="w-5 h-5" />
             </a>
           </div>
-          
-          {/* Copyright & Legal */}
-          <div className="mt-8 md:mt-0 md:order-1">
-            <p className="text-base text-gray-400 text-center md:text-left">
-              &copy; {currentYear} Stride, Inc. All rights reserved.
-            </p>
-            <div className="mt-4 flex justify-center md:justify-start space-x-6 text-sm text-gray-400">
-              <a href="#" className="hover:text-white">Privacy Policy</a>
-              <a href="#" className="hover:text-white">Terms of Service</a>
-              <a href="#" className="hover:text-white">Cookie Policy</a>
-            </div>
-          </div>
+
         </div>
       </div>
     </footer>
