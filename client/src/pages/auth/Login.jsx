@@ -25,7 +25,7 @@ const Login = () => {
       if (response.data.success) {
         localStorage.setItem("token", response.data.token);
         toast.success('Logged in successfully!')
-        navigate('/dashboard')
+        navigate('/')
       } else {
         toast.error(response.data.message || 'Login failed.')
         return;
@@ -41,7 +41,7 @@ const Login = () => {
     try {
       await signInWithPopup(auth, googleProvider)
       toast.success('Logged in with Google!')
-      navigate('/dashboard')
+      navigate('/')
     } catch (error) {
       toast.error(error.message)
     }
@@ -137,7 +137,7 @@ const Login = () => {
 
           <p className="text-center text-sm text-gray-500 mt-6">
             Don't have an account?{' '}
-            <a href="/" className="font-medium text-gray-900 hover:text-black">Sign Up</a>
+            <a href="/register" className="font-medium text-gray-900 hover:text-black">Sign Up</a>
           </p>
 
         </div>
