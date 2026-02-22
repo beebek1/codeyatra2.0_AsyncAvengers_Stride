@@ -6,6 +6,7 @@ import { auth, googleProvider } from '../../services/firebase'
 import { useNavigate } from 'react-router-dom'
 import gmail from "../../assets/gmail.png"
 import toast from 'react-hot-toast'
+import { loginUser } from '../../services/api';
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false)
@@ -19,9 +20,16 @@ const Login = () => {
     e.preventDefault()
     setLoading(true)
     try {
-      await signInWithEmailAndPassword(auth, form.email, form.password)
-      toast.success('Logged in successfully!')
-      navigate('/dashboard')
+      await signInWithEmailAndPassword(auth, form.email, form.password);
+      const response = await loginUser({ email: form.email, password: form.password });
+      if (response.data.success) {
+        localStorage.setItem("token", response.data.token);
+        toast.success('Logged in successfully!')
+        navigate('/dashboard')
+      } else {
+        toast.error(response.data.message || 'Login failed.')
+        return;
+      }
     } catch (error) {
       toast.error(error.message)
     } finally {
