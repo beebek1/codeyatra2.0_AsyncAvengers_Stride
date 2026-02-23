@@ -1,7 +1,7 @@
 import bcrypt from "bcrypt";
 import User from "./auth.models.js";
-import jwt from "jsonwebtoken"
 import { generateToken } from "../../utils/token.js";
+import Interest from "../interest/interest.models.js"; // ⭐ NEW LINE
 
 export const registerUser = async (req, res) => {
   const { email, password } = req.body;
@@ -97,7 +97,6 @@ export const getMe = async (req, res) => {
     // req.user is set by authGuard
     const userId = req.user.userId;
     
-
     if (!userId) {
       return res.status(404).json({
         success: false,
@@ -105,12 +104,36 @@ export const getMe = async (req, res) => {
       });
     }
 
-    // Optionally, fetch user info from DB if needed
-    // const user = await User.findByPk(userId);
+    // Fetch user info from DB
+    const user = await User.findByPk(userId, {
+      attributes: { exclude: ["password"] }
+    });
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    // Fetch interest data for the user
+    const userInterest = await Interest.findOne({
+      where: { userId: userId },
+      attributes: ["interests", "educationLevel", "description"],
+    });
+
+    // Combine both User and Interest data
+    const responseData = {
+      ...user.toJSON(),
+      educationLevel: userInterest?.educationLevel || "Not set",
+      primaryInterest: userInterest?.interests?.[0] || "Not set",
+      allInterests: userInterest?.interests || [],
+      description: userInterest?.description || null,
+    };
 
     return res.status(200).json({
       success: true,
-      userId, // this is the UUID from your database
+      user: responseData,
     });
   } catch (error) {
     return res.status(500).json({
