@@ -11,11 +11,12 @@ import QuizPage from './pages/Quizpage';
 import { ScrollToTop , NotFound, LoadingScreen} from './components/Elements';
 import CareersPage from './pages/Career';
 import Schedule from './pages/Schedule';
-import ProtectedRoute from './protected/ProtectedRoute';
+import Kanban from './components/Kanban';
+import ProtectedRoute from './protected/ProtectedROute';
+import Trello from './pages/Trello';
 
 import Account from './pages/Account';
 import Roadmap from './pages/Roadmap';
-import Trello from './pages/Trello';
 
 // Components
 import Navbar from './components/Navbar';
@@ -45,6 +46,9 @@ function AppWrapper() {
           <Route path="/schedule" element={<ProtectedRoute element={<Schedule />} />} />
           <Route path="/account" element={<ProtectedRoute element={<Account />} />} />
           <Route path="/roadmap" element={<Roadmap/>} />
+          <Route path="/board" element={<ProtectedRoute element={<Trello />} />} />
+          
+          
 
 
         {/* fallout */}
