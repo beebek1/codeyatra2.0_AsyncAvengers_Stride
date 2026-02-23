@@ -124,10 +124,9 @@ const handleStart = async () => {
   if (!selCareer) return;
 
   try {
-    // 1️⃣ Check if roadmap already exists — skip creation if so
     const levelsResponse = await getLevelsByCareerId(selCareer.id);
     if (levelsResponse.data.success && levelsResponse.data.levels.length > 0) {
-      navigate("/roadmap", { state: { careerId: selCareer.id, careerLabel: selCareer.label } });
+      navigate(`/careers/${selCareer.id}`, { state: { careerId: selCareer.id, careerLabel: selCareer.label } });
       return;
     }
 
