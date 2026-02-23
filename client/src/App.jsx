@@ -42,7 +42,7 @@ function AppWrapper() {
         
         <Route path="/" element={<Dashboard />} />
         <Route path="/careers" element={<CareersPage />} />
-        <Route path="/roadmap" element={<Roadmap />} />
+        <Route path="/careers/:id" element={<Roadmap />} />
        <Route path="/mentor" element={<MentoRregister />} />
         <Route path="/trello" element={<Trello />} />
 

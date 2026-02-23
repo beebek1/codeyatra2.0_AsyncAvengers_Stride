@@ -4,6 +4,12 @@ import { Play } from "lucide-react";
 import { getMe } from "../services/api";
 
 // Icons with high-contrast strokes for better visibility
+
+const suggestedCareers = [
+      { id : "bc0d2be7-244d-471a-8d49-dcc3f37a77bc", title: "Frontend Engineer", salary: "$120k", growth: "+15%", color: "#F5C842" },
+      { id : "bc0d2be7-244d-471a-8d49-dcc3f37a77bc", title: "UI/UX Designer", salary: "$95k", growth: "+10%", color: "#0E0E0E" },
+      { id : "bc0d2be7-244d-471a-8d49-dcc3f37a77bc", title: "Fullstack Developer", salary: "$140k", growth: "+22%", color: "#F5C842" }
+]
 const careerIcons = [
   { label: "Engineering", color: "#6366f1", icon: <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m8 2 8 8a4 4 0 1 0 5.66 5.66L14 8l-8-8Z"/><path d="m2 8 8 8a4 4 0 0 0 5.66 5.66L8 14l-8-8Z"/></svg> },
   { label: "Data Science", color: "#06b6d4", icon: <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg> },
@@ -66,6 +72,10 @@ export default function EnhancedDashboard() {
       clearInterval(interval);
     };
   }, []);
+
+  const onClickHandler = (careerId) => {
+      navigate(`/careers/${careerId}`)
+  }
 
   return (
     <div className="min-h-screen bg-[#F9FAFB] text-[#111827] selection:bg-[#F5C842]/30">
@@ -138,9 +148,15 @@ export default function EnhancedDashboard() {
             {/* Mock Dashboard Header */}
             <div className="flex justify-between items-center mb-10">
               <div>
-                <h3 className="text-sm font-black uppercase tracking-tighter">{isLoggedIn ? "Your Roadmap" : "Roadmap Preview"}</h3>
-                <p className="text-xs text-gray-400 font-medium">{isLoggedIn ? "Live progress tracking" : "Updated 2m ago"}</p>
-              </div>
+                {isFirstTimeUser ? (
+                    <h3 className="text-sm font-black uppercase tracking-tighter">Suggested Careers By your preference </h3>
+                ) : (
+                  <>
+                  <h3 className="text-sm font-black uppercase tracking-tighter">{isLoggedIn ? "Your Roadmap" : "Roadmap Preview"}</h3>
+                  <p className="text-xs text-gray-400 font-medium">{isLoggedIn ? "Live progress tracking" : "Updated 2m ago"}</p>
+                </>
+                  )}  
+                  </div>
               <div 
                 className="w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-500 shadow-inner"
                 style={{ backgroundColor: `${careerIcons[iconIdx].color}20`, color: careerIcons[iconIdx].color }}
@@ -149,44 +165,78 @@ export default function EnhancedDashboard() {
               </div>
             </div>
 
-            {/* Roadmap List */}
-            <div className="space-y-4">
-              {roadmapSteps.map((step, i) => (
-                <div 
-                  key={i} 
-                  className={`flex items-start gap-4 p-4 rounded-2xl border transition-all ${
-                    step.status === 'active' ? 'bg-[#F9FAFB] border-[#F5C842] shadow-sm' : 'border-transparent'
-                  }`}
-                >
-                  <div className={`mt-1 w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
-                    step.status === 'complete' ? 'bg-green-500 border-green-500' : 
-                    step.status === 'active' ? 'border-[#F5C842]' : 'border-gray-200'
-                  }`}>
-                    {step.status === 'complete' && <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="4"><path d="M20 6L9 17L4 12"/></svg>}
-                    {step.status === 'active' && <div className="w-2 h-2 rounded-full bg-[#F5C842] animate-pulse" />}
+            {/* Roadmap or Career List */}
+            {!isFirstTimeUser ? (
+              <>
+                <div className="space-y-4">
+                  {roadmapSteps.map((step, i) => (
+                    <div 
+                      key={i} 
+                      className={`flex items-start gap-4 p-4 rounded-2xl border transition-all ${
+                        step.status === 'active' ? 'bg-[#F9FAFB] border-[#F5C842] shadow-sm' : 'border-transparent'
+                      }`}
+                    >
+                      <div className={`mt-1 w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                        step.status === 'complete' ? 'bg-green-500 border-green-500' : 
+                        step.status === 'active' ? 'border-[#F5C842]' : 'border-gray-200'
+                      }`}>
+                        {step.status === 'complete' && <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="4"><path d="M20 6L9 17L4 12"/></svg>}
+                        {step.status === 'active' && <div className="w-2 h-2 rounded-full bg-[#F5C842] animate-pulse" />}
+                      </div>
+                      <div>
+                        <p className={`text-[10px] font-bold uppercase tracking-widest ${step.status === 'active' ? 'text-[#C8980A]' : 'text-gray-400'}`}>
+                          {step.time}
+                        </p>
+                        <p className={`text-sm ${step.status === 'pending' ? 'text-gray-300' : 'font-semibold text-gray-900'}`}>
+                          {step.task}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Float Stats Card */}
+                <div className="absolute bottom-6 right-6 bg-white border border-gray-100 shadow-2xl p-4 rounded-2xl flex items-center gap-4 animate-bounce hover:pause">
+                  <div className="p-3 bg-green-50 rounded-xl">
+                    <span className="text-green-600 font-black text-xl">{isLoggedIn ? `${user?.progress || 48}%` : "92%"}</span>
                   </div>
                   <div>
-                    <p className={`text-[10px] font-bold uppercase tracking-widest ${step.status === 'active' ? 'text-[#C8980A]' : 'text-gray-400'}`}>
-                      {step.time}
-                    </p>
-                    <p className={`text-sm ${step.status === 'pending' ? 'text-gray-300' : 'font-semibold text-gray-900'}`}>
-                      {step.task}
-                    </p>
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">{isLoggedIn ? "Current Momentum" : "Market Fit"}</p>
+                    <p className="text-xs font-bold text-gray-900">{isLoggedIn ? "On Track" : "High Match"}</p>
                   </div>
                 </div>
-              ))}
-            </div>
-
-            {/* Float Stats Card */}
-            <div className="absolute bottom-6 right-6 bg-white border border-gray-100 shadow-2xl p-4 rounded-2xl flex items-center gap-4 animate-bounce hover:pause">
-              <div className="p-3 bg-green-50 rounded-xl">
-                <span className="text-green-600 font-black text-xl">{isLoggedIn ? `${user?.progress || 48}%` : "92%"}</span>
+              </>
+            ) : (
+              /* NEW: Career Insights View */
+              <div className="space-y-2">
+                {suggestedCareers.map((career, idx) => (
+                  <div key={idx} onClick={()=>{onClickHandler(career.id)}} className="group bg-white border border-[#EBEBEB] p-5 rounded-2xl hover:border-[#F5C842] transition-all cursor-pointer shadow-sm">
+                    <div className="flex justify-between items-start mb-3">
+                      <h3 className="font-black text-[#0E0E0E] text-lg leading-tight">{career.title}</h3>
+                      <span className="text-[10px] font-bold bg-green-50 text-green-600 px-2 py-1 rounded-md">
+                        {career.growth} Growth
+                      </span>
+                    </div>
+                    
+                    <div className="flex items-center gap-6">
+                      <div>
+                        <p className="text-[9px] font-bold text-[#bbb] uppercase tracking-tighter">Avg. Salary</p>
+                        <p className="text-md font-black text-[#0E0E0E]">{career.salary}</p>
+                      </div>
+                      <div className="h-8 w-[1px] bg-[#F2F2F2]" />
+                      <div>
+                        <p className="text-[9px] font-bold text-[#bbb] uppercase tracking-tighter">Market Demand</p>
+                        <div className="flex gap-1 mt-1">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <div key={star} className={`w-1.5 h-1.5 rounded-full ${star <= 4 ? 'bg-[#F5C842]' : 'bg-[#EBEBEB]'}`} />
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
-              <div>
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">{isLoggedIn ? "Current Momentum" : "Market Fit"}</p>
-                <p className="text-xs font-bold text-gray-900">{isLoggedIn ? "On Track" : "High Match"}</p>
-              </div>
-            </div>
+            )}
           </div>
         </div>
       </main>
