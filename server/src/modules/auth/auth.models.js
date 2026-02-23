@@ -28,6 +28,12 @@ const User = sequelize.define(
       type: DataTypes.DATE,
       defaultValue: DataTypes.NOW,
     },
+
+    role: {
+            type: DataTypes.ENUM("user", "mentor"),
+            allowNull: false,
+            defaultValue: "user",
+        },
   },
   {
     tableName: "users",
