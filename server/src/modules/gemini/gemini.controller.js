@@ -30,20 +30,24 @@ Create a career roadmap for ${careerName}.
 
 Return ONLY valid JSON in this format:
 Only give main main tasks, up to task5, for each level. Do not give any other text or explanation.
+set timeline for each tasks in each level such that all courses must be completed in 6 months. Timeline should be in weeks and should be realistic for a beginner to complete the task.
 
 {
   "levels": [
     {
       "name": "beginner",
-      "tasks": ["task1", "task2", "task3", "task4", "task5"]
+      "tasks": ["task1", "task2", "task3", "task4", "task5"],
+      "timeline" : [time required for each task to learn]
     },
     {
       "name": "intermediate",
-      "tasks": ["task1", "task2", "task3", "task4", "task5"]
+      "tasks": ["task1", "task2", "task3", "task4", "task5"],
+      "timeline" : [time required for each task to learn]
     },
     {
       "name": "advanced",
-      "tasks": ["task1", "task2", "task3", "task4", "task5"]
+      "tasks": ["task1", "task2", "task3", "task4", "task5"],
+      "timeline" : [time required for each task to learn]
     }
   ]
 }

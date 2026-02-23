@@ -3,6 +3,7 @@ import express from "express";
 import cors from "cors";
 import { sequelize, connectDB } from "./src/db/db.js";
 
+import "./src/modules/associations.js"; // This will setup associations
 // Import your route modules
 import rootRouter from "./src/modules/main.router.js";
 
