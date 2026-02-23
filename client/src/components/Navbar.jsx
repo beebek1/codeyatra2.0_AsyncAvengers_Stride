@@ -1,15 +1,14 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import Logo from '../assets/logo.png'
+import { getMe } from "../services/api";
 
-// Basic profile for testing - set to null to see logged out state
-const MOCK_USER = { name: "Bibek Soti", avatar: null }; 
-
-export default function Navbar({ user = MOCK_USER }) {
+export default function Navbar() {
   const navigate = useNavigate();
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [user, setUser] = useState(null);
   const menuRef = useRef(null);
 
   const navLinks = [
@@ -17,6 +16,18 @@ export default function Navbar({ user = MOCK_USER }) {
     { label: "Schedule", path: "/schedule" },
     { label: "Career",   path: "/careers"  },
   ];
+
+  useEffect(() => {
+    const getUserDetail = async () => {
+      try {
+        const res = await getMe();
+        setUser(res.data.user);
+      } catch (err) {
+        setUser(null);
+      }
+    };
+    getUserDetail();
+  }, []);
 
   const isActive = (path) => location.pathname === path;
 
@@ -67,12 +78,11 @@ export default function Navbar({ user = MOCK_USER }) {
         }
       `}</style>
 
-      <div className="navbar-root w-full px-4 pt-4 pb-2 sticky top-0 z-50 bg-transparent relative z-1000">
+      <div className="navbar-root w-full px-4 pt-4 pb-2 sticky top-0 z-1000 bg-transparent">
         <div className="max-w-3xl mx-auto relative" ref={menuRef}>
 
           <div className="flex items-center justify-between px-5 h-14 rounded-full bg-[#E6E6E6] shadow-[0_4px_12px_rgba(0,0,0,0.08)] transition-shadow duration-300">
 
-            {/* Logo Section */}
             <button onClick={() => navigate("/")} className="flex items-center gap-2.5 cursor-pointer group flex-shrink-0">
               <div className="w-8 h-8 rounded-lg flex items-center justify-center group-hover:scale-105 transition-transform duration-200 overflow-hidden">
                 <img src="/favicon.png" alt="icon" className="w-full h-full object-cover" />
@@ -82,7 +92,6 @@ export default function Navbar({ user = MOCK_USER }) {
               </span>
             </button>
 
-            {/* Nav Links */}
             <div className="hidden md:flex items-center gap-1">
               {navLinks.map((link) => (
                 <button
@@ -97,39 +106,39 @@ export default function Navbar({ user = MOCK_USER }) {
               ))}
             </div>
 
-            {/* Right Side - Dynamic Auth/Profile Logic */}
             <div className="hidden md:flex items-center gap-2">
               {user ? (
-                /* LOGGED IN STATE */
                 <>
-                  {/* Always visible avatar replaces "Sign in" */}
-                  <button 
-                    onClick={()=>navigate("/account")}
+                  <button
+                    onClick={() => navigate("/account")}
                     className="w-9 h-9 rounded-full bg-[#F5C842] flex items-center justify-center flex-shrink-0 overflow-hidden border-2 border-transparent hover:border-white transition-all cursor-pointer"
                   >
                     {user.avatar ? (
                       <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
                     ) : (
-                      <span className="text-[12px] font-bold text-[#0E0E0E]">{user.name.charAt(0)}</span>
+                      <span className="text-[12px] font-bold text-[#0E0E0E]">
+                        {user?.name?.charAt(0) ?? "U"}
+                      </span>
                     )}
                   </button>
 
-                  {/* Name pops out on scroll replaces "Get Started" */}
                   <button
-                    onClick={()=>navigate("/account")}
+                    onClick={() => navigate("/account")}
                     className={`sliding-action-btn ${scrolled ? "visible" : ""} text-[14px] font-semibold bg-[#0E0E0E] text-white py-2 rounded-full cursor-pointer flex items-center gap-2`}
                   >
-                    <span>{user.name.split(" ")[0]}</span>
+                    <span>{user?.name?.split(" ")[0] ?? "Account"}</span>
                   </button>
                 </>
               ) : (
-                /* LOGGED OUT STATE */
                 <>
-                  <button onClick={() => navigate("/login")} className="text-[14px] font-medium text-[#777] hover:text-[#0E0E0E] transition-colors cursor-pointer px-3 py-2">
+                  <button
+                    onClick={() => navigate("/login")}
+                    className="text-[14px] font-medium text-[#777] hover:text-[#0E0E0E] transition-colors cursor-pointer px-3 py-2"
+                  >
                     Sign in
                   </button>
                   <button
-                    onClick={() => navigate("/signup")}
+                    onClick={() => navigate("/")}
                     className={`sliding-action-btn ${scrolled ? "visible" : ""} text-[14px] font-semibold bg-[#0E0E0E] hover:bg-[#2a2a2a] text-white py-2 rounded-full cursor-pointer`}
                   >
                     Get started
@@ -138,7 +147,6 @@ export default function Navbar({ user = MOCK_USER }) {
               )}
             </div>
 
- 
           </div>
         </div>
       </div>
