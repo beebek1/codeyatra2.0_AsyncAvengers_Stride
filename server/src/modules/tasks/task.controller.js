@@ -160,3 +160,31 @@ export const updateTaskStatus = async (req, res) => {
     });
   }
 };
+
+// ==============================
+// GET TASKS WITH STATUS 'progress'
+// ==============================
+export const getTasksWithStatusProgress = async (req, res) => {
+  try {
+    const tasks = await Task.findAll({
+      where: { status: "progress" },
+      include: [
+        {
+          model: Level,
+          as: "level",
+          include: [
+            { model: Career, as: "career", attributes: ["id", "title", "industry"] }
+          ],
+        },
+      ],
+    });
+
+    return res.status(200).json({ success: true, tasks });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch tasks with status progress",
+      error: error.message,
+    });
+  }
+};
