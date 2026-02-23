@@ -14,7 +14,8 @@ import {
   Lock, 
   LogOut, 
   CheckCircle2, 
-  ChevronRight, 
+  ChevronRight,
+  ChevronDown, // <-- Added for the new custom dropdown
   ShieldCheck,
   GraduationCap,
   Briefcase
@@ -26,9 +27,12 @@ const AccountPage = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [user, setUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true); 
+  
+  // State to track which custom dropdown is currently open
+  const [openDropdown, setOpenDropdown] = useState(null);
 
   const getInitials = (name) => {
-    if (!name) return '??';  // ← ADDED THIS CHECK
+    if (!name) return '??';
     return name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
   };
 
@@ -41,8 +45,8 @@ useEffect(() => {
     }
 
     try {
-      await firebaseUser.reload();                  // ← force fresh profile
-      const freshUser = auth.currentUser;           // ← re-read after reload
+      await firebaseUser.reload();
+      const freshUser = auth.currentUser;
 
       const displayName =
         freshUser?.displayName ||
@@ -83,7 +87,7 @@ useEffect(() => {
     }
   });
 
-  return () => unsubscribe();   // ← cleanup listener on unmount
+  return () => unsubscribe();
 }, []);
 
 if (authLoading || !user) {
@@ -102,7 +106,6 @@ if (authLoading || !user) {
       auth.signOut().then(() => navigate('/login'));  
   };
 };
-
 
   const requestNotification = () => {
     if (!("Notification" in window)) {
@@ -125,11 +128,23 @@ if (authLoading || !user) {
     switch (activeTab) {
       case 'Personal Info':
         return (
-          <div className="animate-in fade-in duration-500">
+          <div className="animate-in fade-in duration-500 relative">
+            
+            {/* Invisible overlay to close dropdown when clicking outside */}
+            {openDropdown && (
+              <div 
+                className="fixed inset-0 z-40" 
+                onClick={() => setOpenDropdown(null)} 
+              />
+            )}
+
             <div className="flex justify-between items-center mb-10">
               <h3 className="text-xl font-black tracking-tight uppercase text-gray-900">Profile Settings</h3>
               <button 
-                onClick={() => setIsEditing(!isEditing)} 
+                onClick={() => {
+                  setIsEditing(!isEditing);
+                  setOpenDropdown(null); // Close any open menus when saving
+                }} 
                 className={`border-2 px-5 py-2 rounded-full text-[10px] font-black tracking-widest uppercase transition-all ${
                   isEditing 
                     ? 'bg-[#f5c842] border-[#f5c842] text-black shadow-md shadow-[#f5c842]/20' 
@@ -144,22 +159,94 @@ if (authLoading || !user) {
               {[
                 { label: 'Full Name', value: user.name, key: 'name', icon: <User size={18} /> },
                 { label: 'Email Address', value: user.email, key: 'email', icon: <Mail size={18} /> },
-                { label: 'Current Education', value: user.education, key: 'education', icon: <GraduationCap size={18} /> },
-                { label: 'Primary Interest', value: user.interest, key: 'interest', icon: <Briefcase size={18} /> },
+                { 
+                  label: 'Current Education', 
+                  value: user.education, 
+                  key: 'education', 
+                  icon: <GraduationCap size={18} />,
+                  isDropdown: true,
+                  options: [
+                    "Under High School",
+                    "High School",
+                    "Undergraduate",
+                    "Graduate"
+                  ]
+                },
+                { 
+                  label: 'Primary Interest', 
+                  value: user.interest, 
+                  key: 'interest', 
+                  icon: <Briefcase size={18} />,
+                  isDropdown: true,
+                  options: [
+                    "Technology & Software",
+                    "Business & Entrepreneurship",
+                    "Design & Creative Arts",
+                    "Sports & Fitness",
+                    "Science & Healthcare",
+                    "Media & Communications",
+                    "Education & Social Impact",
+                    "Engineering & Hardware"
+                  ]
+                },
               ].map((field) => (
-                <div key={field.key} className="space-y-3">
+                <div key={field.key} className={`space-y-3 relative ${openDropdown === field.key ? 'z-50' : 'z-10'}`}>
                   <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">{field.label}</label>
+                  
                   <div className="relative group">
-                    <span className={`absolute left-4 top-1/2 -translate-y-1/2 transition-colors ${isEditing ? 'text-[#f5c842]' : 'text-gray-400'}`}>
+                    <span className={`absolute left-4 top-1/2 -translate-y-1/2 transition-colors z-20 ${isEditing ? 'text-[#f5c842]' : 'text-gray-400'}`}>
                       {field.icon}
                     </span>
-                    <input 
-                      type="text" 
-                      disabled={!isEditing}
-                      value={field.value}
-                      onChange={(e) => setUser({...user, [field.key]: e.target.value})}
-                      className="w-full bg-gray-50 border border-gray-200 rounded-2xl py-4 pl-12 pr-4 text-sm font-semibold text-gray-900 focus:border-[#f5c842] focus:ring-1 focus:ring-[#f5c842] outline-none disabled:opacity-70 disabled:bg-gray-100 transition-all"
-                    />
+                    
+                    {field.isDropdown && isEditing ? (
+                      <div className="relative z-50">
+                        {/* Custom Dropdown Trigger */}
+                        <div 
+                          onClick={() => setOpenDropdown(openDropdown === field.key ? null : field.key)}
+                          className={`w-full bg-gray-50 border ${openDropdown === field.key ? 'border-[#f5c842] ring-1 ring-[#f5c842]' : 'border-gray-200'} rounded-[28px] py-4 pl-12 pr-4 text-sm font-semibold text-gray-900 outline-none transition-all cursor-pointer flex justify-between items-center`}
+                        >
+                          <span className={!field.options.includes(field.value) ? "text-gray-400" : ""}>
+                            {field.value}
+                          </span>
+                          <ChevronDown size={18} className={`text-gray-400 transition-transform duration-300 ${openDropdown === field.key ? 'rotate-180 text-[#f5c842]' : ''}`} />
+                        </div>
+
+                        {/* Custom Dropdown Menu with Golden Design */}
+                        {openDropdown === field.key && (
+                          <div className="absolute top-[110%] left-0 w-full bg-white border border-gray-100 rounded-[28px] shadow-[0_16px_40px_rgba(0,0,0,0.08)] overflow-hidden py-3 animate-in fade-in slide-in-from-top-2 duration-200 z-50">
+                            <div className="max-h-[220px] overflow-y-auto">
+                              {field.options.map((opt) => (
+                                <div 
+                                  key={opt}
+                                  onClick={() => {
+                                    setUser({...user, [field.key]: opt});
+                                    setOpenDropdown(null);
+                                  }}
+                                  className={`px-6 py-3.5 text-sm font-bold cursor-pointer transition-all flex items-center gap-3
+                                    ${field.value === opt 
+                                      ? 'bg-[#f5c842]/10 text-gray-900 border-l-[3px] border-[#f5c842]' 
+                                      : 'text-gray-500 border-l-[3px] border-transparent hover:bg-gray-50 hover:text-gray-900 hover:border-gray-200'
+                                    }`}
+                                >
+                                  {/* Yellow Dot Indicator for selected item */}
+                                  {field.value === opt && <div className="w-1.5 h-1.5 rounded-full bg-[#f5c842]" />}
+                                  <span className={field.value !== opt ? 'pl-[18px]' : ''}>{opt}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <input 
+                        type="text" 
+                        disabled={!isEditing || field.isDropdown}
+                        value={field.value}
+                        onChange={(e) => setUser({...user, [field.key]: e.target.value})}
+                        className="w-full bg-gray-50 border border-gray-200 rounded-[28px] py-4 pl-12 pr-4 text-sm font-semibold text-gray-900 focus:border-[#f5c842] focus:ring-1 focus:ring-[#f5c842] outline-none disabled:opacity-70 disabled:bg-gray-100 transition-all"
+                      />
+                    )}
+
                   </div>
                 </div>
               ))}
@@ -310,6 +397,5 @@ if (authLoading || !user) {
     </div>
   );
 };
-
 
 export default AccountPage;
