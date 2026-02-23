@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Play } from "lucide-react";
+import { getMe } from "../services/api";
 
 // Icons with high-contrast strokes for better visibility
 const careerIcons = [
@@ -20,13 +21,50 @@ export default function EnhancedDashboard() {
   const navigate = useNavigate();
   const [mounted, setMounted] = useState(false);
   const [iconIdx, setIconIdx] = useState(0);
+  const [isLoggedIn, setIsLoggedIn] = useState(false); // Placeholder for auth state
+  const [user,setUser] = useState(null);
+
+  const isFirstTimeUser = (user) => {
+    if (!user?.createdAt) return false;
+
+    const createdTime = new Date(user.createdAt).getTime();
+    const now = Date.now();
+
+    const diffInHours = (now - createdTime) / (1000 * 60 * 60);
+
+    return diffInHours < 1;
+  };
 
   useEffect(() => {
+    let interval;
+
+    const initialize = async () => {
+      try {
+        const token = localStorage.getItem("token");
+
+        if (!token) return;
+        setIsLoggedIn(true);
+        const response = await getMe();
+
+        if (response?.data?.success) {
+          const firstTime = response.data.user && isFirstTimeUser(response.data.user);
+          setUser(response.data.user);
+        }
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+      }
+    };
+
     setMounted(true);
-    const interval = setInterval(() => {
+    initialize();
+
+    interval = setInterval(() => {
       setIconIdx((prev) => (prev + 1) % careerIcons.length);
     }, 2500);
-    return () => clearInterval(interval);
+
+    return () => {
+      clearInterval(interval);
+    };
   }, []);
 
   return (
@@ -100,8 +138,8 @@ export default function EnhancedDashboard() {
             {/* Mock Dashboard Header */}
             <div className="flex justify-between items-center mb-10">
               <div>
-                <h3 className="text-sm font-black uppercase tracking-tighter">Roadmap Preview</h3>
-                <p className="text-xs text-gray-400 font-medium">Updated 2m ago</p>
+                <h3 className="text-sm font-black uppercase tracking-tighter">{isLoggedIn ? "Your Roadmap" : "Roadmap Preview"}</h3>
+                <p className="text-xs text-gray-400 font-medium">{isLoggedIn ? "Live progress tracking" : "Updated 2m ago"}</p>
               </div>
               <div 
                 className="w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-500 shadow-inner"
@@ -142,11 +180,11 @@ export default function EnhancedDashboard() {
             {/* Float Stats Card */}
             <div className="absolute bottom-6 right-6 bg-white border border-gray-100 shadow-2xl p-4 rounded-2xl flex items-center gap-4 animate-bounce hover:pause">
               <div className="p-3 bg-green-50 rounded-xl">
-                <span className="text-green-600 font-black text-xl">92%</span>
+                <span className="text-green-600 font-black text-xl">{isLoggedIn ? `${user?.progress || 48}%` : "92%"}</span>
               </div>
               <div>
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">Market Fit</p>
-                <p className="text-xs font-bold text-gray-900">High Match</p>
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">{isLoggedIn ? "Current Momentum" : "Market Fit"}</p>
+                <p className="text-xs font-bold text-gray-900">{isLoggedIn ? "On Track" : "High Match"}</p>
               </div>
             </div>
           </div>

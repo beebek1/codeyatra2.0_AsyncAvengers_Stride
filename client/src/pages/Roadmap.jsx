@@ -28,10 +28,20 @@ export default function RoadmapPage() {
       try {
         const res = await getLevelsByCareerId(careerId);
         const levels = res?.data?.levels || [];
-        setCareerLevels(levels);
+
+        // ✅ FIX: Sort levels by a consistent field so order never changes between renders.
+        // Uses whichever field your backend provides — add/adjust field names as needed.
+        const sorted = [...levels].sort((a, b) => {
+          const aVal = a.order ?? a.sequence ?? a.level_order ?? a.createdAt ?? a.id ?? 0;
+          const bVal = b.order ?? b.sequence ?? b.level_order ?? b.createdAt ?? b.id ?? 0;
+          if (typeof aVal === 'string') return aVal.localeCompare(bVal);
+          return aVal - bVal;
+        });
+
+        setCareerLevels(sorted);
 
         const initialProgress = {};
-        levels.forEach((level) => {
+        sorted.forEach((level) => {
           initialProgress[level.id] = level.completion ?? 0;
         });
         setProgress(initialProgress);
@@ -50,13 +60,10 @@ export default function RoadmapPage() {
     careerLevels.length > 0 &&
     careerLevels.every((level) => (progress[level.id] ?? 0) === 100);
 
-    const onClickHandler = (i, level_id) =>{
-      setActivePanel(i);
-
-      console.log("this is console",i, level_id);
-      navigate("/trello", { state: { level_id: level_id } }); 
-        
-    }
+  const onClickHandler = (i, level_id) => {
+    setActivePanel(i);
+    navigate("/trello", { state: { level_id } });
+  };
 
   const handleLevelComplete = (levelId) => {
     setProgress((prev) => ({ ...prev, [levelId]: 100 }));
@@ -115,7 +122,7 @@ export default function RoadmapPage() {
             const isActive = activePanel === i;
 
             return (
-              <div key={`level-${i}`} className="relative w-full flex flex-col">
+              <div key={`level-${level.id}`} className="relative w-full flex flex-col">
                 {i > 0 && (
                   <SnakeCurve
                     direction={align === 'right' ? 'left-to-right' : 'right-to-left'}

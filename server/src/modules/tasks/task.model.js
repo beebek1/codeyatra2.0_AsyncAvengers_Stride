@@ -32,9 +32,9 @@ const Task = sequelize.define(
     },
 
     status: {
-      type: DataTypes.ENUM("completed", "incomplete", "locked"),
+      type: DataTypes.ENUM("completed", "incomplete", "progress"),
       allowNull: false,
-      defaultValue: "locked",
+      defaultValue: "incomplete",
     },
 
     createdAt: {
