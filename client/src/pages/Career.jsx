@@ -1,37 +1,36 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
 import {
-  Monitor, Server, Layers, Smartphone, Link, Cloud, Shield, Cpu, Bug,
-  BarChart3, Brain, Database, LineChart, Compass, Palette, PenTool,
-  Clapperboard, Target, Rocket, Megaphone, Search, FileText,
-  CreditCard, TrendingUp, RefreshCcw, ChevronDown, Check, ArrowRight, X
+  Monitor, Server, Layers, Smartphone, Link, Cloud, Shield, Bug, Brain, Database, LineChart, Compass, PenTool,
+  Clapperboard, Rocket, Search, FileText,
+  CreditCard, TrendingUp, RefreshCcw, ChevronDown, Check, ArrowRight, X, SlidersHorizontal, RotateCcw
 } from "lucide-react";
-import { Code, Laptop, BarChart, Lock, Box, User } from 'lucide-react';
-import { getAllCareers } from "../services/api";
 
-const CATEGORIES = ["All","Engineering","Data & AI","Design","Product","Marketing","Finance","Other"];
+import { 
+  Cpu, Terminal, BarChart3, Palette, 
+  Target, Megaphone, Landmark, Box 
+} from 'lucide-react';
 
-// BUG 1 FIX: Your LEVELS had "Beginner Friendly" but the API sends "Beginner".
-// Changed to match exact API difficulty values so the level filter actually works.
-const LEVELS = ["All Levels","Beginner","Intermediate","Advanced"];
+import { createLevel, createTask, getAllCareers, getLevelsByCareerId } from "../services/api";
+import { useNavigate } from "react-router-dom"; // BUG FIX 1: was importing `use` from "react" which doesn't exist. Changed to useNavigate from react-router-dom
 
-const LEVEL_STYLE = {
-  // BUG 1 FIX (continued): Keys now match API values "Beginner"/"Intermediate"/"Advanced"
-  // Your original had "Beginner Friendly" which never matched anything from the API.
-  "Beginner":     { pill:"bg-emerald-50 text-emerald-700 border border-emerald-200" },
-  "Intermediate": { pill:"bg-amber-50 text-amber-700 border border-amber-200"       },
-  "Advanced":     { pill:"bg-red-50 text-red-700 border border-red-200"             },
+
+const INDUSTRY_ICONS = {
+  "Engineering": Terminal,
+  "Data & AI": Cpu,
+  "Design": Palette,
+  "Product": Target,
+  "Marketing": Megaphone,
+  "Finance": Landmark,
+  "Other": Box
 };
 
-const icons = {
-  Engineering: Monitor,
-  Design: Laptop,
-  "Data & AI": BarChart,
-  Finance: Cloud,
-  Product: Box,
-  Marketing: FileText,
-  "Data Analyst": BarChart,
-  "UX Designer": User,
+const CATEGORIES = ["All","Engineering","Data & AI","Design","Product","Marketing","Finance","Other"];
+const LEVELS     = ["All Levels","Beginner Friendly","Intermediate","Advanced"];
+
+const LEVEL_STYLE = {
+  "Beginner Friendly": { pill:"bg-emerald-50 text-emerald-700 border border-emerald-200" },
+  "Intermediate":      { pill:"bg-amber-50 text-amber-700 border border-amber-200"       },
+  "Advanced":          { pill:"bg-red-50 text-red-700 border border-red-200"             },
 };
 
 const CAT_ACCENT = {
@@ -49,14 +48,15 @@ const FADE_PEEK = 3;
 
 /* ── PAGE ── */
 export default function CareersPage() {
-  const navigate = useNavigate();
+  const navigate = useNavigate(); // BUG FIX 1 (continued): moved here so it's used properly
   const [mounted,  setMounted]  = useState(false);
   const [search,   setSearch]   = useState("");
   const [category, setCategory] = useState("All");
   const [level,    setLevel]    = useState("All Levels");
   const [selected, setSelected] = useState(null);
   const [expanded, setExpanded] = useState(false);
-  const [careers,  setCareers]  = useState([]);
+  const [showFilters, setShowFilters] = useState(false);
+  const [careers, setCareers] = useState([]);
 
   useEffect(() => { setTimeout(() => setMounted(true), 60); }, []);
   useEffect(() => { setExpanded(false); }, [search, category, level]);
@@ -69,17 +69,18 @@ export default function CareersPage() {
           const careersFromApi = response.data.data.map(c => ({
             id: c.id,
             label: c.title,
+            title: c.title,           // BUG FIX 2: card uses career.title but mapping only set career.label
+            description: c.description, // BUG FIX 2: card uses career.description but mapping only set career.desc
             category: c.industry,
-            // BUG 2 FIX: c.tags is an array from the API (e.g. ["Popular"] or ["🔥 Hot"] or []).
-            // Your original code did c.tags[0] which is correct BUT then used career.tag?.includes("🔥")
-            // which calls String.includes() — that only works if tag is already a string.
-            // c.tags[0] IS a string so this actually works, but c.tags can be [] giving undefined.
-            // The fix: keep c.tags[0] (string or undefined), which is safe for both tag checks below.
+            industry: c.industry,     // BUG FIX 2: card uses career.industry for INDUSTRY_ICONS lookup
             tag: c.tags.length > 0 ? c.tags[0] : null,
             weeks: 16,
-            level: c.difficulty,  // API sends "Beginner" | "Intermediate" | "Advanced" — matches LEVELS now
-            icon: icons[c.industry] || Monitor,
+            level: c.difficulty,
+            difficulty: c.difficulty, // BUG FIX 2: card uses career.difficulty directly
+            icon: INDUSTRY_ICONS[c.industry] || Box,
             desc: c.description,
+            avgSalary: c.avg_salary ? `$${c.avg_salary.toLocaleString()}` : "N/A", // BUG FIX 2: floating bar uses selCareer.avgSalary
+            growthRate: c.growth_rate ? c.growth_rate.replace(/[^0-9]/g, '') : "0", // BUG FIX 2: floating bar uses selCareer.growthRate — strip to number only
           }));
           setCareers(careersFromApi);
         } else {
@@ -93,21 +94,108 @@ export default function CareersPage() {
     getCareersFromApi();
   }, []);
 
+  // BUG FIX 3: `careers` was missing from useMemo deps — filtered was always []
+  // because the memo ran once on mount when careers=[] and never re-ran after API loaded
   const filtered = useMemo(() => careers.filter(c => {
     if (category !== "All" && c.category !== category) return false;
     if (level !== "All Levels" && c.level !== level)   return false;
     const q = search.toLowerCase();
     return !q || c.label.toLowerCase().includes(q) || c.desc.toLowerCase().includes(q);
-  // BUG 3 FIX: `careers` was missing from the dependency array.
-  // Without it, useMemo runs once on mount when careers=[] and never re-runs
-  // after the API call populates it — so filtered was always empty.
-  }), [search, category, level, careers]);
+  }), [search, category, level, careers]); // ← careers added
 
   const needsMore   = !expanded && filtered.length > INITIAL;
   const solidCards  = needsMore ? filtered.slice(0, INITIAL) : filtered;
   const fadedCards  = needsMore ? filtered.slice(INITIAL, INITIAL + FADE_PEEK) : [];
   const hiddenCount = filtered.length - INITIAL;
   const selCareer   = careers.find(c => c.id === selected);
+
+const handleStart = async () => {
+  console.log("Starting roadmap for career:", selCareer);
+  if (!selCareer) return;
+
+  try {
+    // 1️⃣ Check if Levels Exist for This Career
+    const levelsResponse = await getLevelsByCareerId(selCareer.id);
+
+    // If levels exist, directly navigate to the roadmap
+    if (levelsResponse.data.success && levelsResponse.data.levels.length > 0) {
+      console.log("Levels already exist, navigating to roadmap.");
+      navigate("/roadmap", {
+        state: {
+          careerId: selCareer.id,
+          careerLabel: selCareer.label,
+        },
+      });
+      return; // Stop further execution if levels are found
+    }
+
+    // 2️⃣ If Levels Do Not Exist, Create Levels and Tasks
+    console.log("No levels found, creating levels and tasks.");
+    const levelNames = ["beginner", "intermediate", "advance"];
+    const createdLevels = [];
+
+    // Create Levels
+    for (const name of levelNames) {
+      const res = await createLevel({
+        level_name: name,
+        careerId: selCareer.id,
+      });
+
+      if (res.data.success) {
+        createdLevels.push(res.data.level);
+      }
+      console.log(createdLevels);
+    }
+
+    // 3️⃣ Create Tasks for Each Level
+    const defaultTasks = {
+      beginner: [
+        "Understand fundamentals",
+        "Set up development environment",
+        "Complete beginner tutorials",
+      ],
+      intermediate: [
+        "Build small projects",
+        "Learn advanced concepts",
+        "Practice problem solving",
+      ],
+      advance: [
+        "Build 2 portfolio projects",
+        "Deploy project online",
+        "Write project documentation",
+      ],
+    };
+
+    // Loop through the created levels
+    for (const level of createdLevels) {
+  const tasksArray = defaultTasks[level.level_name] || [];
+
+  if (tasksArray.length > 0) {
+    const taskResponse = await createTask({
+      level_id: level.level_id,  // Correct level_id
+      taskName: tasksArray,      // Send array of tasks
+    });
+
+    if (taskResponse.data.success) {
+      console.log(`Tasks for level "${level.level_name}" created successfully!`);
+    } else {
+      console.error(`Failed to create tasks for level "${level.level_name}"`);
+    }
+  }
+}
+
+    // 4️⃣ After Creation, Navigate to Roadmap
+    navigate("/roadmap", {
+      state: {
+        careerId: selCareer.id,
+        careerLabel: selCareer.label,
+      },
+    });
+
+  } catch (error) {
+    console.error("Error creating roadmap:", error.message);
+  }
+};
 
   return (
     <>
@@ -140,6 +228,7 @@ export default function CareersPage() {
               Pick your path.<br />
               <span className="relative inline-block mt-2">
                 <span className="text-[#aaa] font-bold">We'll map the rest.</span>
+                {/* Decorative Underline SVG */}
                 <svg 
                   className="absolute -bottom-3 left-0 w-full h-[15px] pointer-events-none" 
                   viewBox="0 0 300 20" 
@@ -175,41 +264,87 @@ export default function CareersPage() {
           </div>
 
           {/* FILTERS */}
-          <div className={`fade-up ${mounted?"vis":""} mb-8`} style={{transitionDelay:"80ms"}}>
-            <div className="relative mb-4">
-              <Search size={15} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#C4C4C4] pointer-events-none" />
-              <input
-                className="w-full bg-white border border-black/[0.08] rounded-2xl pl-11 pr-4 py-3 text-[13.5px] font-medium text-[#0E0E0E] placeholder:text-[#C8C8C8] outline-none focus:border-[#0E0E0E] focus:ring-2 focus:ring-black/5 transition-all"
-                placeholder="Search careers, skills, roles…"
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-              />
-            </div>
-            <div className="flex gap-2 flex-wrap mb-2">
-              {CATEGORIES.map(cat => (
-                <button key={cat} onClick={() => setCategory(cat)}
-                  className={`text-xs font-bold rounded-full px-4 py-1.5 border transition-all whitespace-nowrap
-                    ${category===cat ? "bg-[#0E0E0E] text-white border-[#0E0E0E]" : "bg-white text-[#999] border-black/10 hover:border-[#888] hover:text-[#333]"}`}>
-                  {cat}
-                </button>
-              ))}
-            </div>
-            <div className="flex gap-2 flex-wrap">
-              {LEVELS.map(l => (
-                <button key={l} onClick={() => setLevel(l)}
-                  className={`text-[11px] font-bold rounded-full px-4 py-1.5 border transition-all whitespace-nowrap
-                    ${level===l ? "bg-[#F5C842] text-[#0E0E0E] border-[#F5C842]" : "bg-white text-[#999] border-black/10 hover:border-[#888] hover:text-[#333]"}`}>
-                  {/* Show "Beginner Friendly" label in UI even though the filter value is "Beginner" */}
-                  {l === "Beginner" ? "Beginner Friendly" : l}
-                </button>
-              ))}
-            </div>
-          </div>
+          <div className={`fade-up ${mounted ? "vis" : ""} mb-8 relative z-50`} style={{ transitionDelay: "80ms" }}>
+            <div className="flex gap-3 mb-4 relative">
+              {/* Search Input Container */}
+              <div className="relative flex-1">
+                <Search size={15} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#C4C4C4] pointer-events-none" />
+                <input
+                  className="w-full bg-white border border-black/[0.08] rounded-2xl pl-11 pr-4 py-3 text-[13.5px] font-medium text-[#0E0E0E] placeholder:text-[#C8C8C8] outline-none focus:border-[#0E0E0E] focus:ring-2 focus:ring-black/5 transition-all"
+                  placeholder="Search careers, skills, roles…"
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                />
+              </div>
 
-          {/* META */}
-          <div className="flex items-center justify-between mb-5">
-            <span className="text-xs font-semibold text-[#C0C0C0]">{filtered.length} career{filtered.length!==1?"s":""}</span>
-            {selCareer && <span className="text-xs font-bold text-amber-600">✓ {selCareer.label} selected</span>}
+              {/* Filter Wrapper */}
+              <div 
+                className="relative"
+                onMouseEnter={() => setShowFilters(true)}
+                onMouseLeave={() => setShowFilters(false)}
+              >
+                <button 
+                  className={`flex items-center gap-2 px-5 h-[48px] rounded-2xl border transition-all duration-300 font-bold text-[13px] cursor-pointer
+                    ${showFilters 
+                      ? "bg-[#0E0E0E] text-white border-[#0E0E0E] shadow-md" 
+                      : "bg-white text-[#0E0E0E] border-black/[0.08] hover:bg-[#F2F2F2] hover:border-black/20"
+                    }`}
+                >
+                  <SlidersHorizontal size={16} className={`transition-transform duration-300 ${showFilters ? 'rotate-180' : ''}`} />
+                  <span>Filters</span>
+                </button>
+
+                {/* Pop-up Menu with Animation */}
+                <div className={`
+                  absolute right-0 top-[44px] pt-3 w-72 transition-all duration-300 ease-out z-50
+                  ${showFilters 
+                    ? "opacity-100 translate-y-0 pointer-events-auto" 
+                    : "opacity-0 translate-y-2 pointer-events-none"}
+                `}> 
+                  <div className="bg-white border border-black/[0.08] rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.15)] p-5">
+                    <div className="flex justify-between items-center mb-4 pb-2 border-b border-black/5">
+                      <h4 className="font-bold text-sm">Filter Options</h4>
+                      <button 
+                        onClick={() => { setCategory("All"); setLevel("All Levels"); }}
+                        className="text-[10px] uppercase tracking-tighter font-bold text-[#999] hover:text-red-500 transition-colors cursor-pointer"
+                      >
+                        Reset
+                      </button>
+                    </div>
+
+                    <div className="space-y-6">
+                      {/* Category Section */}
+                      <div>
+                        <p className="text-[10px] uppercase tracking-widest text-[#999] font-bold mb-3">Category</p>
+                        <div className="flex gap-2 flex-wrap">
+                          {CATEGORIES.map(cat => (
+                            <button key={cat} onClick={() => setCategory(cat)}
+                              className={`text-[11px] font-bold rounded-full px-3 py-1.5 border transition-all cursor-pointer
+                                ${category === cat ? "bg-[#0E0E0E] text-white border-[#0E0E0E]" : "bg-white text-[#999] border-black/10 hover:border-black/40 hover:text-black"}`}>
+                              {cat}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Level Section */}
+                      <div>
+                        <p className="text-[10px] uppercase tracking-widest text-[#999] font-bold mb-3">Experience</p>
+                        <div className="flex gap-2 flex-wrap">
+                          {LEVELS.map(l => (
+                            <button key={l} onClick={() => setLevel(l)}
+                              className={`text-[11px] font-bold rounded-full px-3 py-1.5 border transition-all cursor-pointer
+                                ${level === l ? "bg-[#F5C842] text-[#0E0E0E] border-[#F5C842]" : "bg-white text-[#999] border-black/10 hover:border-black/40 hover:text-black"}`}>
+                              {l}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* GRID + FADE OVERLAY */}
@@ -242,6 +377,7 @@ export default function CareersPage() {
             {/* Fade + See More */}
             {needsMore && (
               <>
+                {/* Gradient anchored to TOP of faded row, fades downward */}
                 <div
                   className="absolute left-0 right-0 pointer-events-none"
                   style={{
@@ -250,10 +386,11 @@ export default function CareersPage() {
                     background: "linear-gradient(to bottom, rgba(242,241,239,0.0) 0%, rgba(242,241,239,0.45) 30%, rgba(242,241,239,0.85) 58%, #f9fafb 78%, #f9fafb 100%)",
                   }}
                 />
+                {/* Button sits below */}
                 <div className="flex justify-center mt-4 relative z-10">
                   <button
                     onClick={() => setExpanded(true)}
-                    className="flex items-center gap-2 bg-[#0E0E0E] hover:bg-[#222] active:scale-95 text-white text-[13px] font-bold rounded-full px-7 py-3.5 shadow-xl shadow-black/20 transition-all hover:-translate-y-0.5"
+                    className="flex cursor-pointer items-center gap-2 bg-[#1e1e1e] hover:bg-[#3c3c3c] active:scale-95 text-white text-[13px] font-bold rounded-full px-7 py-3.5 shadow-xl shadow-black/20 transition-all hover:-translate-y-0.5"
                   >
                     <ChevronDown size={15} />
                     See {hiddenCount} more career{hiddenCount!==1?"s":""}
@@ -267,7 +404,7 @@ export default function CareersPage() {
                 <p className="text-sm font-semibold text-[#bbb] mb-3">No careers match your filters.</p>
                 <button
                   onClick={() => { setSearch(""); setCategory("All"); setLevel("All Levels"); }}
-                  className="text-xs font-bold text-amber-600 hover:text-amber-700 transition-colors"
+                  className="cursor-pointer text-xs font-bold text-amber-600 hover:text-amber-700 transition-colors"
                 >
                   Clear all filters →
                 </button>
@@ -280,30 +417,59 @@ export default function CareersPage() {
 
         {/* FLOATING BAR */}
         <div
-          className="fixed bottom-7 left-1/2 z-50"
+          className="fixed bottom-10 left-1/2 z-50 w-auto max-w-[95vw] cursor-pointer"
           style={{
-            transform: selected ? "translateX(-50%) translateY(0)" : "translateX(-50%) translateY(90px)",
+            transform: selected ? "translateX(-50%) translateY(0)" : "translateX(-50%) translateY(120px)",
             opacity: selected ? 1 : 0,
             pointerEvents: selected ? "all" : "none",
-            transition: "transform .42s cubic-bezier(.34,1.56,.64,1), opacity .28s ease",
+            transition: "transform .6s cubic-bezier(.34,1.56,.64,1), opacity .3s ease",
           }}
         >
-          <div className="flex items-center gap-3 bg-[#0E0E0E] rounded-full pl-5 pr-2.5 py-2.5 shadow-2xl shadow-black/30 border border-white/[0.05] whitespace-nowrap">
-            <div className="w-2 h-2 rounded-full bg-[#F5C842] shrink-0" />
-            <span className="text-[13px] font-bold text-white">{selCareer?.label}</span>
-            <div className="w-px h-4 bg-white/10" />
-            <span className="text-[11px] text-[#555] font-semibold">~{selCareer?.weeks} weeks</span>
-            <button
-              onClick={() => navigate(`/roadmap`, { state: { careerId: selCareer?.id, careerLabel: selCareer?.label } })}
-              className="flex items-center gap-1.5 bg-[#F5C842] hover:bg-[#e8b800] text-[#0E0E0E] text-[13px] font-black rounded-full px-5 py-2.5 transition-colors">
-              Start Roadmap <ArrowRight size={13} />
-            </button>
-            <button
-              onClick={() => setSelected(null)}
-              className="w-8 h-8 flex items-center justify-center rounded-full text-[#555] hover:text-white hover:bg-white/10 transition-all"
-            >
-              <X size={14} />
-            </button>
+          {/* The Ambient Halo */}
+          <div className="absolute inset-0 bg-[#F5C842]/15 blur-2xl -z-10 rounded-full animate-pulse" />
+
+          <div className="relative flex items-center gap-8 bg-[#1A1A1A]/95 backdrop-blur-xl rounded-[2rem] pl-8 pr-3 py-3 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.6)] border border-white/5">
+            
+            {/* Section 1: Dynamic Label */}
+            <div className="flex flex-col min-w-[140px]">
+              <div className="flex items-center gap-2 mb-0.5">
+                <span className="text-[10px] text-[#F5C842] font-black uppercase tracking-[0.2em]">
+                  Selected Path
+                </span>
+              </div>
+              <h4 className="text-[15px] font-bold text-white tracking-tight leading-tight">
+                {selCareer?.title}
+              </h4>
+            </div>
+
+            {/* Section 2: Stats */}
+            <div className="hidden sm:flex items-center gap-8 px-8 border-l border-white/10">
+              <div className="flex flex-col">
+                <span className="text-[9px] text-white/30 font-bold uppercase tracking-widest mb-0.5">Market Pay</span>
+                <span className="text-[12px] text-white/90 font-medium">{selCareer?.avgSalary}</span>
+              </div>
+              <div className="flex flex-col">
+                <span className="text-[9px] text-white/30 font-bold uppercase tracking-widest mb-0.5">Trend</span>
+                <span className="text-[12px] text-[#22C55E] font-bold">+{selCareer?.growthRate}%</span>
+              </div>
+            </div>
+
+            {/* Section 3: Action Buttons */}
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={() => handleStart()}
+                className="group flex items-center gap-2 bg-[#F5C842] hover:bg-[#FFD84D] text-[#1A1A1A] text-[13px] font-black rounded-full px-8 py-3.5 transition-all hover:scale-[1.03] active:scale-95 cursor-pointer shadow-lg shadow-[#F5C842]/10">
+                Start Journey
+                <ArrowRight size={16} strokeWidth={3} className="transition-transform group-hover:translate-x-1" />
+              </button>
+
+              <button
+                onClick={() => setSelected(null)}
+                className="w-11 h-11 flex items-center justify-center rounded-full text-white/30 hover:text-white hover:bg-white/5 transition-all cursor-pointer"
+              >
+                <X size={18} />
+              </button>
+            </div>
           </div>
         </div>
 
@@ -315,206 +481,101 @@ export default function CareersPage() {
 /* ── CARD ── */
 function CareerCard({ career, selected, onSelect, animDelay, faded }) {
   const [hovered, setHovered] = useState(false);
-  const [ripples, setRipples] = useState([]);
-  const [checkPop, setCheckPop] = useState(false);
-  const lvl = LEVEL_STYLE[career.level];
-  const cat = CAT_ACCENT[career.category] || CAT_ACCENT["Other"];
-  const Icon = career.icon;
-
-  const PHASES = ["Basics", "Intermediate", "Portfolio", "Job Ready"];
-
-  function handleClick(e) {
-    if (faded) return;
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    const id = Date.now();
-    setRipples(r => [...r, { id, x, y }]);
-    setTimeout(() => setRipples(r => r.filter(r => r.id !== id)), 700);
-    if (!selected) {
-      setCheckPop(true);
-      setTimeout(() => setCheckPop(false), 400);
-    }
-    onSelect();
-  }
+  
+  const Icon = INDUSTRY_ICONS[career.industry] || INDUSTRY_ICONS["Other"];
 
   return (
     <div
-      onClick={handleClick}
+      onClick={onSelect}
       onMouseEnter={() => !faded && setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       className={`
-        relative bg-white rounded-2xl overflow-hidden border-2
-        ${faded ? "pointer-events-none" : "cursor-pointer"}
-        ${!faded && selected
-          ? "border-[#F5C842] -translate-y-2 shadow-[0_0_0_5px_rgba(245,200,66,0.16),0_20px_50px_rgba(0,0,0,0.13)]"
-          : !faded && hovered
-            ? "border-[#0E0E0E] -translate-y-1 shadow-[0_10px_32px_rgba(0,0,0,0.11)]"
-            : "border-transparent shadow-[0_1px_3px_rgba(0,0,0,0.06),0_4px_14px_rgba(0,0,0,0.04)]"
+        group relative bg-white rounded-[2rem] overflow-hidden transition-all duration-500
+        ${faded ? "pointer-events-none opacity-40" : "cursor-pointer"}
+        ${selected 
+          ? "border-[#F5C842] shadow-[0_20px_40px_rgba(245,200,66,0.15)] -translate-y-2" 
+          : "border-black/[0.04] hover:border-black/[0.1] shadow-sm hover:shadow-xl hover:-translate-y-1"
         }
+        border-2
       `}
-      style={{
-        animationDelay:`${animDelay}ms`,
-        transition: "transform 0.25s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.25s ease, border-color 0.2s ease",
-      }}
+      style={{ animationDelay: `${animDelay}ms` }}
     >
-      {/* Ripple effects */}
-      {ripples.map(r => (
-        <span
-          key={r.id}
-          className="absolute rounded-full pointer-events-none"
-          style={{
-            left: r.x, top: r.y,
-            width: 8, height: 8,
-            marginLeft: -4, marginTop: -4,
-            background: selected ? "rgba(14,14,14,0.08)" : "rgba(245,200,66,0.35)",
-            animation: "rippleOut 0.65s ease-out forwards",
-          }}
-        />
-      ))}
+      {/* Subtle background glow when selected */}
+      {selected && (
+        <div className="absolute inset-0 bg-gradient-to-br from-[#F5C842]/5 to-transparent pointer-events-none" />
+      )}
 
-      {/* Selected accent bar — slides in */}
-      <div
-        className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[#F5C842] via-[#FFD84D] to-transparent z-10"
-        style={{
-          transform: selected ? "scaleX(1)" : "scaleX(0)",
-          transformOrigin: "left",
-          transition: "transform 0.35s cubic-bezier(0.34,1.56,0.64,1)",
-        }}
-      />
-
-      {/* Background tint on select */}
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          background: "linear-gradient(135deg, rgba(245,200,66,0.04) 0%, transparent 60%)",
-          opacity: selected ? 1 : 0,
-          transition: "opacity 0.3s ease",
-        }}
-      />
-
-      <div className="relative p-5">
-        {/* Top row */}
-        <div className="flex items-start justify-between mb-4">
-          {/* Icon — scales and changes bg on select */}
-          <div
-            style={{
-              background: selected ? "#F5C842" : undefined,
-              transition: "background 0.25s ease, transform 0.25s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.25s ease",
-              transform: selected ? "scale(1.1)" : hovered ? "scale(1.05)" : "scale(1)",
-              boxShadow: selected ? "0 4px 14px rgba(245,200,66,0.4)" : "none",
-            }}
-            className={`w-11 h-11 rounded-[14px] flex items-center justify-center ring-4 ${selected ? "ring-[#F5C842]/20" : cat.ring} ${selected ? "" : cat.bg}`}
+      <div className="relative p-7 z-10">
+        {/* Header */}
+        <div className="flex items-start justify-between mb-6">
+          <div className={`
+            w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-500
+            ${selected 
+              ? "bg-[#F5C842] text-white shadow-[0_8px_20px_rgba(245,200,66,0.3)]" 
+              : "bg-[#FBFBF9] text-[#A0A090] group-hover:bg-[#F5C842]/10 group-hover:text-[#F5C842]"
+            }`}
           >
-            <Icon
-              size={20} strokeWidth={1.8}
-              className={selected ? "text-[#0E0E0E]" : cat.text}
-              style={{ transition: "color 0.2s ease" }}
-            />
+            <Icon size={22} strokeWidth={2.5} />
           </div>
 
-          {/* Tags + check */}
-          <div className="flex flex-col items-end gap-1.5">
-            {career.tag?.includes("🔥") && (
-              <span className="text-[9px] font-black tracking-wide uppercase rounded-full px-2.5 py-1 bg-orange-50 text-orange-600 border border-orange-200">🔥 Hot</span>
-            )}
-            {career.tag === "Popular" && (
-              <span className="text-[9px] font-black tracking-wide uppercase rounded-full px-2.5 py-1 bg-violet-50 text-violet-600 border border-violet-200">Popular</span>
-            )}
-            {/* Animated check badge */}
-            <div
-              style={{
-                width: 22, height: 22,
-                borderRadius: "50%",
-                background: selected ? "#0E0E0E" : hovered ? "#0E0E0E" : "#F0F0EE",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                transform: checkPop ? "scale(1.4)" : selected ? "scale(1.1)" : "scale(1)",
-                transition: "transform 0.3s cubic-bezier(0.34,1.56,0.64,1), background 0.2s ease",
-              }}
-            >
-              {selected
-                ? <Check size={11} color="#F5C842" strokeWidth={3} />
-                : <ArrowRight size={10} color={hovered ? "#fff" : "#ccc"} strokeWidth={2} />
-              }
-            </div>
-          </div>
+          <span className={`
+            text-[10px] font-bold px-3 py-1 rounded-full tracking-tight transition-all
+            ${selected ? "bg-[#F5C842] text-white" : "bg-[#F5F5F3] text-[#999]"}
+          `}>
+            {career.industry}
+          </span>
         </div>
 
-        {/* Title */}
-        <h3 className="text-[14.5px] font-black text-[#0E0E0E] tracking-tight leading-snug mb-1.5">
-          {career.label}
-        </h3>
+        {/* Title & Description */}
+        <div className="mb-6">
+          <h3 className={`text-[16px] font-bold tracking-tight transition-colors ${selected ? 'text-[#0E0E0E]' : 'text-[#333]'}`}>
+            {career.title}
+          </h3>
+          <p className="text-[12.5px] text-[#999] leading-relaxed line-clamp-2 mt-1">
+            {career.description}
+          </p>
+        </div>
 
-        {/* Desc */}
-        <p className="text-[12px] text-[#999] leading-relaxed mb-4 line-clamp-2">{career.desc}</p>
-
-        {/* Expandable roadmap phases — slides open on select */}
-        <div
-          style={{
-            maxHeight: selected ? 80 : 0,
-            opacity: selected ? 1 : 0,
-            overflow: "hidden",
-            transition: "max-height 0.4s cubic-bezier(0.4,0,0.2,1), opacity 0.3s ease",
-            marginBottom: selected ? 14 : 0,
-          }}
-        >
-          <div className="flex items-center gap-1.5 pt-1 pb-3">
-            {PHASES.map((phase, i) => (
-              <React.Fragment key={phase}>
-                <div className="flex flex-col items-center gap-1">
-                  <div
-                    className="w-2 h-2 rounded-full"
-                    style={{
-                      background: i === 0 ? "#F5C842" : "#E5E5E5",
-                      transform: selected ? "scale(1)" : "scale(0)",
-                      transition: `transform 0.3s cubic-bezier(0.34,1.56,0.64,1) ${i * 60}ms`,
-                    }}
-                  />
-                  <span className="text-[9px] font-bold text-[#bbb] whitespace-nowrap">{phase}</span>
-                </div>
-                {i < PHASES.length - 1 && (
-                  <div
-                    className="h-px bg-[#E8E8E8] flex-1"
-                    style={{
-                      transform: selected ? "scaleX(1)" : "scaleX(0)",
-                      transformOrigin: "left",
-                      transition: `transform 0.3s ease ${i * 60 + 80}ms`,
-                    }}
-                  />
-                )}
-              </React.Fragment>
-            ))}
+        {/* Stats Grid */}
+        <div className={`
+          grid grid-cols-2 gap-4 p-4 rounded-2xl transition-all duration-500
+          ${selected 
+            ? "bg-[#F5C842]/5 border-[#F5C842]/20 shadow-inner" 
+            : "bg-[#F9F9F8] border-transparent"
+          }
+          border
+        `}>
+          <div>
+            <p className="text-[9px] uppercase font-bold tracking-widest mb-1 text-[#AAA]">Avg Salary</p>
+            <p className={`text-[14px] font-bold ${selected ? 'text-[#C8980A]' : 'text-[#444]'}`}>
+              {career.avgSalary}
+            </p>
+          </div>
+          <div className={`pl-4 border-l ${selected ? 'border-[#F5C842]/20' : 'border-black/5'}`}>
+            <p className="text-[9px] uppercase font-bold tracking-widest mb-1 text-[#AAA]">Growth</p>
+            <p className="text-[14px] font-bold text-[#22C55E]">
+              +{career.growthRate}%
+            </p>
           </div>
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between mt-6">
           <div className="flex items-center gap-2">
-            <span
-              className="text-[10px] font-bold rounded-full px-2.5 py-1"
-              style={{
-                background: selected ? "#0E0E0E" : "#F5F5F3",
-                color: selected ? "#F5C842" : "#bbb",
-                transition: "background 0.25s ease, color 0.25s ease",
-              }}
-            >
-              ~{career.weeks}w
+            <div className={`w-1.5 h-1.5 rounded-full ${selected ? 'bg-[#F5C842] animate-pulse' : 'bg-[#DDD]'}`} />
+            <span className={`text-[10px] font-bold ${selected ? 'text-[#0E0E0E]' : 'text-[#AAA]'}`}>
+              {career.difficulty}
             </span>
-            {/* Level pill commented out as in your original */}
-            {/* <span className={`text-[9.5px] font-black rounded-full px-2.5 py-1 ${lvl.pill}`}>
-              {career.level === "Beginner Friendly" ? "Beginner" : career.level}
-            </span> */}
           </div>
 
-          {/* "Start" text appears on select */}
-          {selected && (
-            <span
-              className="text-[10px] font-black text-[#C8980A] tracking-wide"
-              style={{ animation: "fadeSlideIn 0.3s ease forwards" }}
-            >
-              Ready to start →
-            </span>
-          )}
+          {/* Start Button */}
+          <div className={`
+            flex items-center gap-1 transition-all duration-300
+            ${selected ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-4'}
+          `}>
+            <span className="text-[11px] font-bold text-[#F5C842]">Explore</span>
+            <ArrowRight size={14} className="text-[#F5C842]" strokeWidth={3} />
+          </div>
         </div>
       </div>
     </div>

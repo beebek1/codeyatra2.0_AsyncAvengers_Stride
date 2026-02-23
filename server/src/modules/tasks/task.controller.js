@@ -1,43 +1,56 @@
 import Task from "./task.model.js";
-import Level from "./level.model.js";
+import Level from "../levels/level.model.js";
 
 /*
 CREATE TASK
 */
 export const createTask = async (req, res) => {
-  const { level_id, taskName } = req.body;
+  console.log("Received request:", req.body);
 
-  if (!level_id || !taskName) {
+  const { level_id, taskName, timeline = 0 } = req.body;
+
+  // Validate input
+  if (!level_id || !Array.isArray(taskName) || taskName.length === 0) {
     return res.status(400).json({
       success: false,
-      message: "level_id and taskName are required",
+      message: "level_id and taskName (array) are required",
     });
   }
 
   try {
-    // Optional: check if level exists
-    const levelExists = await Level.findByPk(level_id);
-    if (!levelExists) {
+    // Fetch level to get level_name
+    const level = await Level.findByPk(level_id);
+    if (!level) {
       return res.status(404).json({
         success: false,
         message: "Level not found",
       });
     }
 
-    const newTask = await Task.create({
+    // Determine task status based on level_name
+    const defaultStatus = level.level_name === "beginner" ? "incomplete" : "locked";
+
+    // Prepare tasks array with timeline and status
+    const tasksToInsert = taskName.map((name) => ({
       level_id,
-      taskName,
-    });
+      taskName: name,
+      timeline,       // timeline in minutes (default 0)
+      status: defaultStatus,
+    }));
+
+    // Bulk create tasks
+    const createdTasks = await Task.bulkCreate(tasksToInsert);
 
     return res.status(201).json({
       success: true,
-      message: "Task created successfully",
-      task: newTask,
+      message: "Tasks created successfully",
+      tasks: createdTasks,
     });
+
   } catch (error) {
     return res.status(500).json({
       success: false,
-      message: "Failed to create task",
+      message: "Failed to create tasks",
       error: error.message,
     });
   }
