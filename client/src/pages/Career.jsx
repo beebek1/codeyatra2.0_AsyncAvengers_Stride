@@ -10,7 +10,7 @@ import {
   Target, Megaphone, Landmark, Box 
 } from 'lucide-react';
 
-import { createLevel, createTask, getAllCareers, getLevelsByCareerId } from "../services/api";
+import { askGeminiToMakeTaskAccordingToCarrer, createLevel, createTask, getAllCareers, getLevelsByCareerId } from "../services/api";
 import { useNavigate } from "react-router-dom"; // BUG FIX 1: was importing `use` from "react" which doesn't exist. Changed to useNavigate from react-router-dom
 
 
@@ -109,82 +109,74 @@ export default function CareersPage() {
   const hiddenCount = filtered.length - INITIAL;
   const selCareer   = careers.find(c => c.id === selected);
 
+  // Map AI level names to your DB enum
+  const normalizeLevelName = (levelName) => {
+    const name = levelName.toLowerCase();
+    if (name.includes("beginner")) return "beginner";
+    if (name.includes("intermediate")) return "intermediate";
+    return "advance";
+  };
+
 const handleStart = async () => {
-  console.log("Starting roadmap for career:", selCareer);
   if (!selCareer) return;
 
   try {
-    // 1️⃣ Check if Levels Exist for This Career
+    // 1️⃣ Check if roadmap already exists
     const levelsResponse = await getLevelsByCareerId(selCareer.id);
 
-    // If levels exist, directly navigate to the roadmap
-    if (levelsResponse.data.success && levelsResponse.data.levels.length > 0) {
-      console.log("Levels already exist, navigating to roadmap.");
+    if (
+      levelsResponse.data.success &&
+      levelsResponse.data.levels.length > 0
+    ) {
       navigate("/roadmap", {
         state: {
           careerId: selCareer.id,
           careerLabel: selCareer.label,
         },
       });
-      return; // Stop further execution if levels are found
+      return;
     }
 
-    // 2️⃣ If Levels Do Not Exist, Create Levels and Tasks
-    console.log("No levels found, creating levels and tasks.");
-    const levelNames = ["beginner", "intermediate", "advance"];
-    const createdLevels = [];
+    // 2️⃣ Ask backend (Gemini) to generate roadmap
+    const geminiResponse =
+      await askGeminiToMakeTaskAccordingToCarrer(selCareer.label);
 
-    // Create Levels
-    for (const name of levelNames) {
-      const res = await createLevel({
-        level_name: name,
+    if (!geminiResponse.data.success) {
+      throw new Error("Failed to generate roadmap from AI");
+    }
+
+    // 3️⃣ Clean AI response
+    let roadmapText = geminiResponse.data.roadmap;
+    roadmapText = roadmapText.replace(/```json|```/g, "").trim();
+
+    // 4️⃣ Parse JSON safely
+    let roadmap;
+    try {
+      roadmap = JSON.parse(roadmapText);
+    } catch (err) {
+      throw new Error("AI returned invalid JSON format");
+    }
+
+    if (!roadmap.levels || !Array.isArray(roadmap.levels)) {
+      throw new Error("Invalid roadmap structure");
+    }
+
+    // 5️⃣ Create levels + tasks dynamically
+    for (const level of roadmap.levels) {
+      const levelRes = await createLevel({
+        level_name: normalizeLevelName(level.name),
         careerId: selCareer.id,
       });
 
-      if (res.data.success) {
-        createdLevels.push(res.data.level);
+      if (levelRes.data.success) {
+        await createTask({
+          level_id: levelRes.data.level.level_id,
+          taskName: level.tasks,
+        });
       }
-      console.log(createdLevels);
     }
 
-    // 3️⃣ Create Tasks for Each Level
-    const defaultTasks = {
-      beginner: [
-        "Understand fundamentals",
-        "Set up development environment",
-        "Complete beginner tutorials",
-      ],
-      intermediate: [
-        "Build small projects",
-        "Learn advanced concepts",
-        "Practice problem solving",
-      ],
-      advance: [
-        "Build 2 portfolio projects",
-        "Deploy project online",
-        "Write project documentation",
-      ],
-    };
-
-    // Loop through the created levels
-    for (const level of createdLevels) {
-  const tasksArray = defaultTasks[level.level_name] || [];
-
-  if (tasksArray.length > 0) {
-    const taskResponse = await createTask({
-      level_id: level.level_id,  // Correct level_id
-      taskName: tasksArray,      // Send array of tasks
-    });
-
-    if (taskResponse.data.success) {
-      console.log(`Tasks for level "${level.level_name}" created successfully!`);
-    } else {
-      console.error(`Failed to create tasks for level "${level.level_name}"`);
-    }
-  }
-}
-
-    // 4️⃣ After Creation, Navigate to Roadmap
+    // 6️⃣ Navigate to roadmap
     navigate("/roadmap", {
       state: {
         careerId: selCareer.id,
@@ -193,7 +185,7 @@ const handleStart = async () => {
     });
 
   } catch (error) {
-    console.error("Error creating roadmap:", error.message);
+    console.error("Error generating roadmap:", error.message);
   }
 };
 
