@@ -26,6 +26,14 @@ export const registerUser = (data) => Api.post("/api/auth/register", data);
 export const loginUser = (data) => Api.post("/api/auth/login", data);
 
 export const getAllCareers = () => Api.get("/api/career/");
+export const getCareerById = (id) => Api.get(`/api/career/${id}`);
+
+export const createLevel = (data) => Api.post("/api/level/createlevels", data, config);
+export const getLevelsByCareerId = (careerId) => Api.get(`/api/level/career/${careerId}`);
+
+export const createTask = (data) => Api.post("/api/task/createTask", data, config);
+export const getTasksByLevelId = (levelId) => Api.get(`/api/task/getTask/${levelId}`);
+
 export const getMe = () => Api.get("/api/auth/getme", config);
 
 export const addUserInterests = (interests, educationLevel, description = "") => {
@@ -46,8 +54,5 @@ export const addUserInterests = (interests, educationLevel, description = "") =>
 
 export const getUserInterests = (userId) => {
   return Api.get(`/api/interest/${userId}`, config);
-<<<<<<< HEAD
 };
-=======
 };
->>>>>>> origin/bisesh
