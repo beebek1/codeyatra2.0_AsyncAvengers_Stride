@@ -12,6 +12,7 @@ import {
 
 import { askGeminiToMakeTaskAccordingToCarrer, createLevel, createTask, getAllCareers, getLevelsByCareerId } from "../services/api";
 import { useNavigate } from "react-router-dom"; // BUG FIX 1: was importing `use` from "react" which doesn't exist. Changed to useNavigate from react-router-dom
+import { LoadingScreen } from "../components/Elements";
 
 
 const INDUSTRY_ICONS = {
@@ -57,6 +58,7 @@ export default function CareersPage() {
   const [expanded, setExpanded] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [careers, setCareers] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => { setTimeout(() => setMounted(true), 60); }, []);
   useEffect(() => { setExpanded(false); }, [search, category, level]);
@@ -138,6 +140,9 @@ const handleStart = async () => {
       return;
     }
 
+    //setting loading true before calling gemini
+    setLoading(true);
+
     // 2️⃣ Ask backend (Gemini) to generate roadmap
     const geminiResponse =
       await askGeminiToMakeTaskAccordingToCarrer(selCareer.label);
@@ -177,7 +182,6 @@ const handleStart = async () => {
       }
     }
 
-    // 6️⃣ Navigate to roadmap
     navigate("/roadmap", {
       state: {
         careerId: selCareer.id,
@@ -189,6 +193,9 @@ const handleStart = async () => {
     console.error("Error generating roadmap:", error.message);
   }
 };
+
+
+  if(loading) return <LoadingScreen/>
 
   return (
     <>
