@@ -48,12 +48,20 @@ const Career = sequelize.define(
       type: DataTypes.ARRAY(DataTypes.STRING),
       defaultValue: [],
     },
+
+    sponsorship_link: {
+      type: DataTypes.STRING,
+      allowNull: true, // Optional link
+      validate: {
+        isUrl: true, // Ensures only valid URLs are saved
+      },
+    },
   },
   {
-    tableName : "career",
+    tableName: "career",
     underscored: true, // convert camelCase to snake_case
     timestamps: true,
-  },
+  }
 );
 
 export default Career;
