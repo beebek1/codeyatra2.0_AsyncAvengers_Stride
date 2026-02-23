@@ -1,9 +1,10 @@
 import Level from "./level.model.js";
 import Career from "../careers/career.model.js";
+import Task from "../tasks/task.model.js";
 
-/*
-CREATE LEVEL
-*/
+// ==============================
+// CREATE LEVEL
+// ==============================
 export const createLevel = async (req, res) => {
   const { level_name, careerId } = req.body;
 
@@ -15,7 +16,7 @@ export const createLevel = async (req, res) => {
   }
 
   try {
-    // Optional: check if career exists
+    // Check if career exists
     const careerExists = await Career.findByPk(careerId);
     if (!careerExists) {
       return res.status(404).json({
@@ -43,13 +44,24 @@ export const createLevel = async (req, res) => {
   }
 };
 
-
-/*
-GET ALL LEVELS
-*/
+// ==============================
+// GET ALL LEVELS (with Career & Tasks)
+// ==============================
 export const getAllLevels = async (req, res) => {
   try {
-    const levels = await Level.findAll();
+    const levels = await Level.findAll({
+      include: [
+        {
+          model: Career,
+          as: "career",
+          attributes: ["id", "title", "industry"],
+        },
+        {
+          model: Task,
+          as: "tasks",
+        },
+      ],
+    });
 
     return res.status(200).json({
       success: true,
@@ -64,16 +76,26 @@ export const getAllLevels = async (req, res) => {
   }
 };
 
-
-/*
-GET LEVELS BY CAREER ID
-*/
+// ==============================
+// GET LEVELS BY CAREER ID (with Tasks)
+// ==============================
 export const getLevelsByCareer = async (req, res) => {
   const { careerId } = req.params;
 
   try {
     const levels = await Level.findAll({
       where: { careerId },
+      include: [
+        {
+          model: Task,
+          as: "tasks",
+        },
+        {
+          model: Career,
+          as: "career",
+          attributes: ["id", "title", "industry"],
+        },
+      ],
     });
 
     return res.status(200).json({
@@ -89,16 +111,27 @@ export const getLevelsByCareer = async (req, res) => {
   }
 };
 
-
-/*
-UPDATE LEVEL
-*/
+// ==============================
+// UPDATE LEVEL
+// ==============================
 export const updateLevel = async (req, res) => {
   const { level_id } = req.params;
   const { level_name } = req.body;
 
   try {
-    const level = await Level.findByPk(level_id);
+    const level = await Level.findByPk(level_id, {
+      include: [
+        {
+          model: Career,
+          as: "career",
+          attributes: ["id", "title", "industry"],
+        },
+        {
+          model: Task,
+          as: "tasks",
+        },
+      ],
+    });
 
     if (!level) {
       return res.status(404).json({

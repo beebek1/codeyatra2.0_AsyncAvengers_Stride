@@ -1,9 +1,12 @@
 import bcrypt from "bcrypt";
 import User from "./auth.models.js";
-import jwt from "jsonwebtoken"
+import jwt from "jsonwebtoken";
 import { generateToken } from "../../utils/token.js";
-import Interest from "../interest/interest.models.js"; // ⭐ NEW LINE
+import Interest from "../interest/interest.models.js"; // used for eager loading
 
+// ==============================
+// Register User
+// ==============================
 export const registerUser = async (req, res) => {
   const { email, password } = req.body;
 
@@ -15,7 +18,7 @@ export const registerUser = async (req, res) => {
   }
 
   try {
-    //check wheather the user Exists or not
+    // Check if user already exists
     const userExists = await User.findOne({ where: { email } });
 
     if (userExists) {
@@ -25,9 +28,10 @@ export const registerUser = async (req, res) => {
       });
     }
 
-    //Hashed Password
+    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // Create user
     const newUser = await User.create({
       email,
       password: hashedPassword,
@@ -46,6 +50,9 @@ export const registerUser = async (req, res) => {
   }
 };
 
+// ==============================
+// Login User
+// ==============================
 export const login = async (req, res) => {
   const { email, password } = req.body;
 
@@ -66,7 +73,6 @@ export const login = async (req, res) => {
       });
     }
 
-    //Check the user password to the password on database
     const isValid = await bcrypt.compare(password, user.password);
 
     if (!isValid) {
@@ -82,7 +88,7 @@ export const login = async (req, res) => {
       success: true,
       message: "Login successful",
       userId: user.id,
-      token: token
+      token,
     });
   } catch (error) {
     return res.status(500).json({
@@ -93,11 +99,12 @@ export const login = async (req, res) => {
   }
 };
 
+// ==============================
+// Get Logged-in User (with Interests)
+// ==============================
 export const getMe = async (req, res) => {
   try {
-    // req.user is set by authGuard
     const userId = req.user.userId;
-    
 
     if (!userId) {
       return res.status(404).json({
@@ -106,9 +113,16 @@ export const getMe = async (req, res) => {
       });
     }
 
-    // Fetch user info from DB
+    // Fetch user and associated interests
     const user = await User.findByPk(userId, {
-      attributes: { exclude: ["password"] }
+      attributes: { exclude: ["password"] },
+      include: [
+        {
+          model: Interest,
+          as: "interests", // MUST match association alias
+          attributes: ["interests", "educationLevel", "description"],
+        },
+      ],
     });
 
     if (!user) {
@@ -118,13 +132,9 @@ export const getMe = async (req, res) => {
       });
     }
 
-    // Fetch interest data for the user
-    const userInterest = await Interest.findOne({
-      where: { userId: userId },
-      attributes: ["interests", "educationLevel", "description"],
-    });
+    // Take first interest record if exists
+    const userInterest = user.interests?.[0] || null;
 
-    // Combine both User and Interest data
     const responseData = {
       ...user.toJSON(),
       educationLevel: userInterest?.educationLevel || "Not set",

@@ -14,6 +14,7 @@ import Schedule from './pages/Schedule';
 import Kanban from './components/Kanban';
 import ProtectedRoute from './protected/ProtectedROute';
 import Trello from './pages/Trello';
+
 import Account from './pages/Account';
 import Roadmap from './pages/Roadmap';
 
@@ -38,6 +39,7 @@ function AppWrapper() {
            <Route path="/" element={<Dashboard/>} />
            <Route path="/forgot-password" element={<ForgotPassword/>} />
            <Route path="/careers" element={<CareersPage/>} />
+           <Route path="/kanban" element={<Trello/>} />
 
             {/* Protected routes */}
           <Route path="/quiz" element={<ProtectedRoute element={<QuizPage />} />} />

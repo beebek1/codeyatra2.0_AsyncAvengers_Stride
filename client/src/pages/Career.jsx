@@ -10,8 +10,9 @@ import {
   Target, Megaphone, Landmark, Box 
 } from 'lucide-react';
 
-import { createLevel, createTask, getAllCareers, getLevelsByCareerId } from "../services/api";
+import { askGeminiToMakeTaskAccordingToCarrer, createLevel, createTask, getAllCareers, getLevelsByCareerId } from "../services/api";
 import { useNavigate } from "react-router-dom"; // BUG FIX 1: was importing `use` from "react" which doesn't exist. Changed to useNavigate from react-router-dom
+import { LoadingScreen } from "../components/Elements";
 
 
 const INDUSTRY_ICONS = {
@@ -57,6 +58,7 @@ export default function CareersPage() {
   const [expanded, setExpanded] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [careers, setCareers] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => { setTimeout(() => setMounted(true), 60); }, []);
   useEffect(() => { setExpanded(false); }, [search, category, level]);
@@ -79,6 +81,7 @@ export default function CareersPage() {
             difficulty: c.difficulty, // BUG FIX 2: card uses career.difficulty directly
             icon: INDUSTRY_ICONS[c.industry] || Box,
             desc: c.description,
+            sponsorship_link : c.sponsorship_link, // BUG FIX 2: CareerCard uses career.sponsorship_link but it wasn't included in the mapping
             avgSalary: c.avg_salary ? `$${c.avg_salary.toLocaleString()}` : "N/A", // BUG FIX 2: floating bar uses selCareer.avgSalary
             growthRate: c.growth_rate ? c.growth_rate.replace(/[^0-9]/g, '') : "0", // BUG FIX 2: floating bar uses selCareer.growthRate — strip to number only
           }));
@@ -109,93 +112,85 @@ export default function CareersPage() {
   const hiddenCount = filtered.length - INITIAL;
   const selCareer   = careers.find(c => c.id === selected);
 
+  // Map AI level names to your DB enum
+  const normalizeLevelName = (levelName) => {
+    const name = levelName.toLowerCase();
+    if (name.includes("beginner")) return "beginner";
+    if (name.includes("intermediate")) return "intermediate";
+    return "advance";
+  };
+
 const handleStart = async () => {
-  console.log("Starting roadmap for career:", selCareer);
-  if (!selCareer) return;
+    if (!selCareer) return;
 
-  try {
-    // 1️⃣ Check if Levels Exist for This Career
-    const levelsResponse = await getLevelsByCareerId(selCareer.id);
+    try {
+      // 1️⃣ Check if roadmap already exists — skip creation if so
+      const levelsResponse = await getLevelsByCareerId(selCareer.id);
+      if (levelsResponse.data.success && levelsResponse.data.levels.length > 0) {
+        navigate("/roadmap", { state: { careerId: selCareer.id, careerLabel: selCareer.label } });
+        return;
+      }
+      
+      //setting loading true before calling gemini
+      setLoading(true);
 
-    // If levels exist, directly navigate to the roadmap
-    if (levelsResponse.data.success && levelsResponse.data.levels.length > 0) {
-      console.log("Levels already exist, navigating to roadmap.");
+      // 2️⃣ Ask Gemini to generate roadmap
+      const geminiResponse = await askGeminiToMakeTaskAccordingToCarrer(selCareer.label);
+      if (!geminiResponse.data.success) throw new Error("Failed to generate roadmap from AI");
+
+      // 3️⃣ Clean AI response (strip markdown code fences if present)
+      let roadmapText = geminiResponse.data.roadmap;
+      roadmapText = roadmapText.replace(/```json|```/g, "").trim();
+
+      // 4️⃣ Parse JSON safely
+      let roadmap;
+      try {
+        roadmap = JSON.parse(roadmapText);
+      } catch (err) {
+        throw new Error("AI returned invalid JSON format");
+      }
+
+      if (!roadmap.levels || !Array.isArray(roadmap.levels)) {
+        throw new Error("Invalid roadmap structure");
+      }
+
+      // 5️⃣ Create levels + tasks with timeline
+      for (const level of roadmap.levels) {
+        const levelRes = await createLevel({
+          level_name: normalizeLevelName(level.name),
+          careerId: selCareer.id,
+        });
+
+        if (levelRes.data.success) {
+          await createTask({
+            level_id: levelRes.data.level.level_id,
+            taskName: level.tasks,
+            timeline: level.timeline, // ← passes AI-generated timeline array to backend
+          });
+        }
+      }
+
       navigate("/roadmap", {
         state: {
           careerId: selCareer.id,
           careerLabel: selCareer.label,
         },
       });
-      return; // Stop further execution if levels are found
+
+    } catch (error) {
+      console.error("Error creating roadmap:", error.message);
     }
 
-    // 2️⃣ If Levels Do Not Exist, Create Levels and Tasks
-    console.log("No levels found, creating levels and tasks.");
-    const levelNames = ["beginner", "intermediate", "advance"];
-    const createdLevels = [];
-
-    // Create Levels
-    for (const name of levelNames) {
-      const res = await createLevel({
-        level_name: name,
-        careerId: selCareer.id,
-      });
-
-      if (res.data.success) {
-        createdLevels.push(res.data.level);
-      }
-      console.log(createdLevels);
-    }
-
-    // 3️⃣ Create Tasks for Each Level
-    const defaultTasks = {
-      beginner: [
-        "Understand fundamentals",
-        "Set up development environment",
-        "Complete beginner tutorials",
-      ],
-      intermediate: [
-        "Build small projects",
-        "Learn advanced concepts",
-        "Practice problem solving",
-      ],
-      advance: [
-        "Build 2 portfolio projects",
-        "Deploy project online",
-        "Write project documentation",
-      ],
-    };
-
-    // Loop through the created levels
-    for (const level of createdLevels) {
-  const tasksArray = defaultTasks[level.level_name] || [];
-
-  if (tasksArray.length > 0) {
-    const taskResponse = await createTask({
-      level_id: level.level_id,  // Correct level_id
-      taskName: tasksArray,      // Send array of tasks
-    });
-
-    if (taskResponse.data.success) {
-      console.log(`Tasks for level "${level.level_name}" created successfully!`);
-    } else {
-      console.error(`Failed to create tasks for level "${level.level_name}"`);
-    }
-  }
-}
-
-    // 4️⃣ After Creation, Navigate to Roadmap
     navigate("/roadmap", {
       state: {
         careerId: selCareer.id,
         careerLabel: selCareer.label,
       },
     });
-
-  } catch (error) {
-    console.error("Error creating roadmap:", error.message);
-  }
 };
+
+
+  if(loading) return <LoadingScreen/>
 
   return (
     <>
@@ -568,13 +563,33 @@ function CareerCard({ career, selected, onSelect, animDelay, faded }) {
             </span>
           </div>
 
-          {/* Start Button */}
-          <div className={`
-            flex items-center gap-1 transition-all duration-300
-            ${selected ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-4'}
-          `}>
-            <span className="text-[11px] font-bold text-[#F5C842]">Explore</span>
-            <ArrowRight size={14} className="text-[#F5C842]" strokeWidth={3} />
+          <div className="flex items-center gap-3">
+            {/* Sponsorship link */}
+            {career.sponsorship_link && (
+              <a
+                href={career.sponsorship_link}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={e => e.stopPropagation()}
+                className={`flex items-center gap-1 text-[10px] font-bold text-blue-500 hover:text-blue-600 transition-colors
+                                ${selected ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-4'}
+                `}
+              >
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
+                </svg>
+                Learn
+              </a>
+            )}
+
+            {/* Explore */}
+            <div className={`
+              flex items-center gap-1 transition-all duration-300
+              ${selected ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-4'}
+            `}>
+              <span className="text-[11px] font-bold text-[#F5C842]">Explore</span>
+              <ArrowRight size={14} className="text-[#F5C842]" strokeWidth={3} />
+            </div>
           </div>
         </div>
       </div>
