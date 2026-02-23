@@ -8,11 +8,9 @@ import Register from './pages/auth/Register';
 import Dashboard from './pages/Dashboard';
 import ForgotPassword from './pages/auth/ForgotPassword';
 import QuizPage from './pages/Quizpage';
-//lksjdflkjds
 import { ScrollToTop , NotFound, LoadingScreen} from './components/Elements';
 import CareersPage from './pages/Career';
 import Schedule from './pages/Schedule';
-import Kanban from './components/Kanban';
 import ProtectedRoute from './protected/ProtectedRoute';
 
 import Account from './pages/Account';
