@@ -1,4 +1,10 @@
 import React, { useState } from 'react';
+import { useEffect } from "react";
+import { getMe } from "../services/api";
+import { auth } from "../services/firebase"; 
+import { useNavigate } from "react-router-dom";
+import { onAuthStateChanged } from "firebase/auth";
+
 import { 
   User, 
   Mail, 
@@ -15,27 +21,88 @@ import {
 } from 'lucide-react';
 
 const AccountPage = () => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('Personal Info');
   const [isEditing, setIsEditing] = useState(false);
-  const [user, setUser] = useState({
-    name: "BIBEK SOTI",
-    email: "bibek.soti@stride.com",
-    education: "College / Bachelor's",
-    interest: "Technology & Software",
-    location: "Kathmandu, Nepal",
-    memberSince: "FEB 2026",
-    tier: "BETA EXPLORER"
-  });
+  const [user, setUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true); 
 
   const getInitials = (name) => {
+    if (!name) return '??';  // ← ADDED THIS CHECK
     return name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
   };
 
-  const handleSignOut = () => {
-    if(window.confirm("Are you sure you want to sign out?")) {
-      window.location.href = "/login"; 
+useEffect(() => {
+  const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+    setAuthLoading(false); 
+    if (!firebaseUser) {
+      navigate('/login');
+      return;
     }
+
+    try {
+      await firebaseUser.reload();                  // ← force fresh profile
+      const freshUser = auth.currentUser;           // ← re-read after reload
+
+      const displayName =
+        freshUser?.displayName ||
+        freshUser?.email?.split('@')[0] ||
+        "User";
+
+      const response = await getMe();
+      const backendUser = response.data.user;
+
+      const formattedDate = new Date(backendUser.createdAt)
+        .toLocaleDateString("en-US", { month: "short", year: "numeric" })
+        .toUpperCase();
+
+      setUser({
+        name: displayName,
+        email: backendUser.email || freshUser?.email,
+        education: backendUser.educationLevel || "Not set",
+        interest: backendUser.primaryInterest || "Not set",
+        location: backendUser.location || "Not set",
+        memberSince: formattedDate,
+        tier: "BETA EXPLORER",
+      });
+
+    } catch (error) {
+      console.error("Failed to fetch user:", error);
+      try { await firebaseUser.reload(); } catch (_) {}
+      const freshUser = auth.currentUser;
+
+      setUser({
+        name: freshUser?.displayName || freshUser?.email?.split('@')[0] || "User",
+        email: freshUser?.email || "email@example.com",
+        education: "Not set",
+        interest: "Not set",
+        location: "Not set",
+        memberSince: "N/A",
+        tier: "BETA EXPLORER",
+      });
+    }
+  });
+
+  return () => unsubscribe();   // ← cleanup listener on unmount
+}, []);
+
+if (authLoading || !user) {
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="flex flex-col items-center gap-4">
+        <div className="w-10 h-10 border-4 border-[#f5c842] border-t-transparent rounded-full animate-spin"></div>
+        <p className="text-gray-500 text-sm font-bold uppercase tracking-widest">Loading account...</p>
+      </div>
+    </div>
+  );
+}
+
+  const handleSignOut = () => {
+    if (window.confirm("Are you sure you want to sign out?")) {
+      auth.signOut().then(() => navigate('/login'));  
   };
+};
+
 
   const requestNotification = () => {
     if (!("Notification" in window)) {
@@ -243,5 +310,6 @@ const AccountPage = () => {
     </div>
   );
 };
+
 
 export default AccountPage;

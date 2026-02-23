@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { Eye, EyeOff } from 'lucide-react'
-import { createUserWithEmailAndPassword, signInWithPopup } from 'firebase/auth'
+import { createUserWithEmailAndPassword, signInWithPopup , updateProfile} from 'firebase/auth'
 import { auth, googleProvider } from '../../services/firebase'
 import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
@@ -24,9 +24,17 @@ const Register = () => {
     }
     setLoading(true)
     try {
-      await createUserWithEmailAndPassword(auth, form.email, form.password);
-      const response = await registerUser({ email: form.email, password: form.password });
-      if (response.data.success) {
+      const userCredential = await createUserWithEmailAndPassword(auth, form.email, form.password);
+      // ⭐ NEW: Save the displayName in Firebase
+      await updateProfile(userCredential.user, {
+        displayName: form.fullName
+      });
+      await userCredential.user.reload();                        // ← force sync displayName
+      const response = await registerUser({ 
+        email: form.email, 
+        password: form.password,
+      });
+            if (response.data.success) {
         setForm({ fullName: '', email: '', password: '', confirmPassword: '' })
         toast.success('Account created successfully!')
         navigate('/login')
@@ -40,15 +48,23 @@ const Register = () => {
     }
   }
 
-  const handleGoogleRegister = async () => {
-    try {
-      await signInWithPopup(auth, googleProvider)
-      toast.success('Signed up with Google!')
-      navigate('/dashboard')
-    } catch (error) {
-      toast.error(error.message)
-    }
+ const handleGoogleRegister = async () => {
+  try {
+    const result = await signInWithPopup(auth, googleProvider)
+    const firebaseUser = result.user
+
+    await registerUser({                                   // ← register in backend
+      email: firebaseUser.email,
+      password: null
+    })
+
+    toast.success('Signed up with Google!')
+    navigate('/dashboard')
+  } catch (error) {
+    console.error('Google register error:', error)
+    toast.error(error.message)
   }
+}
 
   return (
     <div className="h-screen flex w-full font-sans overflow-hidden">

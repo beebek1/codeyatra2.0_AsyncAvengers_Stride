@@ -46,4 +46,8 @@ export const addUserInterests = (interests, educationLevel, description = "") =>
 
 export const getUserInterests = (userId) => {
   return Api.get(`/api/interest/${userId}`, config);
+<<<<<<< HEAD
 };
+=======
+};
+>>>>>>> origin/bisesh
