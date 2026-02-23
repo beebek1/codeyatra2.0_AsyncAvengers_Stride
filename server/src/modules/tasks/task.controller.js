@@ -1,24 +1,29 @@
 import Task from "./task.model.js";
 import Level from "../levels/level.model.js";
+import Career from "../careers/career.model.js";
 
-/*
-CREATE TASK
-*/
+// ==============================
+// CREATE TASKS
+// ==============================
 export const createTask = async (req, res) => {
   console.log("Received request:", req.body);
 
-  const { level_id, taskName, timeline = 0 } = req.body;
+  const { level_id, taskName, timeline } = req.body;
 
   // Validate input
-  if (!level_id || !Array.isArray(taskName) || taskName.length === 0) {
+  if (
+    !level_id ||
+    !Array.isArray(taskName) ||
+    taskName.length === 0 ||
+    (timeline && (!Array.isArray(timeline) || timeline.length !== taskName.length))
+  ) {
     return res.status(400).json({
       success: false,
-      message: "level_id and taskName (array) are required",
+      message: "level_id and taskName (array) are required. If timeline is provided, it must match taskName length.",
     });
   }
 
   try {
-    // Fetch level to get level_name
     const level = await Level.findByPk(level_id);
     if (!level) {
       return res.status(404).json({
@@ -27,18 +32,15 @@ export const createTask = async (req, res) => {
       });
     }
 
-    // Determine task status based on level_name
-    const defaultStatus = level.level_name === "beginner" ? "incomplete" : "locked";
+    const defaultStatus = "locked";
 
-    // Prepare tasks array with timeline and status
-    const tasksToInsert = taskName.map((name) => ({
+    const tasksToInsert = taskName.map((name, index) => ({
       level_id,
       taskName: name,
-      timeline,       // timeline in minutes (default 0)
+      timeline: timeline ? timeline[index] : 0,
       status: defaultStatus,
     }));
 
-    // Bulk create tasks
     const createdTasks = await Task.bulkCreate(tasksToInsert);
 
     return res.status(201).json({
@@ -46,8 +48,8 @@ export const createTask = async (req, res) => {
       message: "Tasks created successfully",
       tasks: createdTasks,
     });
-
   } catch (error) {
+    console.error("CreateTask Error:", error);
     return res.status(500).json({
       success: false,
       message: "Failed to create tasks",
@@ -56,13 +58,26 @@ export const createTask = async (req, res) => {
   }
 };
 
-
-/*
-GET ALL TASKS
-*/
+// ==============================
+// GET ALL TASKS (with Level & Career)
+// ==============================
 export const getAllTasks = async (req, res) => {
   try {
-    const tasks = await Task.findAll();
+    const tasks = await Task.findAll({
+      include: [
+        {
+          model: Level,
+          as: "level",
+          include: [
+            {
+              model: Career,
+              as: "career",
+              attributes: ["id", "title", "industry"],
+            },
+          ],
+        },
+      ],
+    });
 
     return res.status(200).json({
       success: true,
@@ -77,16 +92,28 @@ export const getAllTasks = async (req, res) => {
   }
 };
 
-
-/*
-GET TASKS BY LEVEL
-*/
+// ==============================
+// GET TASKS BY LEVEL (with Level & Career)
+// ==============================
 export const getTasksByLevel = async (req, res) => {
   const { level_id } = req.params;
 
   try {
     const tasks = await Task.findAll({
       where: { level_id },
+      include: [
+        {
+          model: Level,
+          as: "level",
+          include: [
+            {
+              model: Career,
+              as: "career",
+              attributes: ["id", "title", "industry"],
+            },
+          ],
+        },
+      ],
     });
 
     return res.status(200).json({
@@ -102,16 +129,29 @@ export const getTasksByLevel = async (req, res) => {
   }
 };
 
-
-/*
-UPDATE TASK
-*/
+// ==============================
+// UPDATE TASK
+// ==============================
 export const updateTask = async (req, res) => {
   const { id } = req.params;
   const { taskName } = req.body;
 
   try {
-    const task = await Task.findByPk(id);
+    const task = await Task.findByPk(id, {
+      include: [
+        {
+          model: Level,
+          as: "level",
+          include: [
+            {
+              model: Career,
+              as: "career",
+              attributes: ["id", "title", "industry"],
+            },
+          ],
+        },
+      ],
+    });
 
     if (!task) {
       return res.status(404).json({

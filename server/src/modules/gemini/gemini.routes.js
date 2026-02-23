@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { askGeminiToMakeTaskAccordingToCarrer } from "./gemini.controller.js";
+import { askGeminiToMakeTaskAccordingToCarrer} from "./gemini.controller.js";
 
 const router = Router();
 

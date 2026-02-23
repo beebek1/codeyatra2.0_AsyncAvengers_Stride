@@ -1,13 +1,32 @@
 import Career from "./career.model.js";
+import Level from "../levels/level.model.js";
+import Task from "../tasks/task.model.js";
 
+// ==============================
 // 1. Get all careers (with optional filtering by industry)
+// Include Levels and Tasks
+// ==============================
 export const getAllCareers = async (req, res) => {
   try {
     const { industry } = req.query;
     const filter = industry ? { where: { industry } } : {};
 
-    const careers = await Career.findAll(filter);
-    
+    const careers = await Career.findAll({
+      ...filter,
+      include: [
+        {
+          model: Level,
+          as: "levels", // match association alias
+          include: [
+            {
+              model: Task,
+              as: "tasks", // match association alias
+            },
+          ],
+        },
+      ],
+    });
+
     // Convert Sequelize instances to plain objects
     const careersData = careers.map(career => career.toJSON());
 
@@ -21,10 +40,26 @@ export const getAllCareers = async (req, res) => {
   }
 };
 
+// ==============================
 // 2. Get a single career's details
+// Include Levels and Tasks
+// ==============================
 export const getCareerById = async (req, res) => {
   try {
-    const career = await Career.findByPk(req.params.id);
+    const career = await Career.findByPk(req.params.id, {
+      include: [
+        {
+          model: Level,
+          as: "levels",
+          include: [
+            {
+              model: Task,
+              as: "tasks",
+            },
+          ],
+        },
+      ],
+    });
 
     if (!career) {
       return res
@@ -38,7 +73,9 @@ export const getCareerById = async (req, res) => {
   }
 };
 
+// ==============================
 // 3. Admin: Add a new career
+// ==============================
 export const createCareer = async (req, res) => {
   try {
     const { title, description, industry, avg_salary, difficulty, tags, sponsorship_link } = req.body;
@@ -50,7 +87,7 @@ export const createCareer = async (req, res) => {
       avg_salary,
       difficulty,
       tags,
-      sponsorship_link, // Include the new field
+      sponsorship_link,
     });
 
     return res.status(201).json({ success: true, data: newCareer });

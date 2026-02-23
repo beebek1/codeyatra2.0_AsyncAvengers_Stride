@@ -121,65 +121,64 @@ export default function CareersPage() {
   };
 
 const handleStart = async () => {
-  if (!selCareer) return;
+    if (!selCareer) return;
 
-  try {
-    // 1️⃣ Check if roadmap already exists
-    const levelsResponse = await getLevelsByCareerId(selCareer.id);
+    try {
+      // 1️⃣ Check if roadmap already exists — skip creation if so
+      const levelsResponse = await getLevelsByCareerId(selCareer.id);
+      if (levelsResponse.data.success && levelsResponse.data.levels.length > 0) {
+        navigate("/roadmap", { state: { careerId: selCareer.id, careerLabel: selCareer.label } });
+        return;
+      }
+      
+      //setting loading true before calling gemini
+      setLoading(true);
 
-    if (
-      levelsResponse.data.success &&
-      levelsResponse.data.levels.length > 0
-    ) {
+      // 2️⃣ Ask Gemini to generate roadmap
+      const geminiResponse = await askGeminiToMakeTaskAccordingToCarrer(selCareer.label);
+      if (!geminiResponse.data.success) throw new Error("Failed to generate roadmap from AI");
+
+      // 3️⃣ Clean AI response (strip markdown code fences if present)
+      let roadmapText = geminiResponse.data.roadmap;
+      roadmapText = roadmapText.replace(/```json|```/g, "").trim();
+
+      // 4️⃣ Parse JSON safely
+      let roadmap;
+      try {
+        roadmap = JSON.parse(roadmapText);
+      } catch (err) {
+        throw new Error("AI returned invalid JSON format");
+      }
+
+      if (!roadmap.levels || !Array.isArray(roadmap.levels)) {
+        throw new Error("Invalid roadmap structure");
+      }
+
+      // 5️⃣ Create levels + tasks with timeline
+      for (const level of roadmap.levels) {
+        const levelRes = await createLevel({
+          level_name: normalizeLevelName(level.name),
+          careerId: selCareer.id,
+        });
+
+        if (levelRes.data.success) {
+          await createTask({
+            level_id: levelRes.data.level.level_id,
+            taskName: level.tasks,
+            timeline: level.timeline, // ← passes AI-generated timeline array to backend
+          });
+        }
+      }
+
       navigate("/roadmap", {
         state: {
           careerId: selCareer.id,
           careerLabel: selCareer.label,
         },
       });
-      return;
-    }
 
-    //setting loading true before calling gemini
-    setLoading(true);
-
-    // 2️⃣ Ask backend (Gemini) to generate roadmap
-    const geminiResponse =
-      await askGeminiToMakeTaskAccordingToCarrer(selCareer.label);
-
-    if (!geminiResponse.data.success) {
-      throw new Error("Failed to generate roadmap from AI");
-    }
-
-    // 3️⃣ Clean AI response
-    let roadmapText = geminiResponse.data.roadmap;
-    roadmapText = roadmapText.replace(/```json|```/g, "").trim();
-
-    // 4️⃣ Parse JSON safely
-    let roadmap;
-    try {
-      roadmap = JSON.parse(roadmapText);
-    } catch (err) {
-      throw new Error("AI returned invalid JSON format");
-    }
-
-    if (!roadmap.levels || !Array.isArray(roadmap.levels)) {
-      throw new Error("Invalid roadmap structure");
-    }
-
-    // 5️⃣ Create levels + tasks dynamically
-    for (const level of roadmap.levels) {
-      const levelRes = await createLevel({
-        level_name: normalizeLevelName(level.name),
-        careerId: selCareer.id,
-      });
-
-      if (levelRes.data.success) {
-        await createTask({
-          level_id: levelRes.data.level.level_id,
-          taskName: level.tasks,
-        });
-      }
+    } catch (error) {
+      console.error("Error creating roadmap:", error.message);
     }
 
     navigate("/roadmap", {
