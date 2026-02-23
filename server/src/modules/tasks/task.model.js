@@ -1,6 +1,6 @@
 import { DataTypes } from "sequelize";
-import { sequelize } from "../db/db.js";
-import Level from "./level.model.js";
+import { sequelize } from "../../db/db.js";
+import Level from "../levels/level.model.js"; // Import Level model for association
 
 const Task = sequelize.define(
   "Task",
@@ -22,8 +22,20 @@ const Task = sequelize.define(
     },
 
     taskName: {
-      type: DataTypes.STRING(150),
+      type: DataTypes.STRING(200), // ✅ STRING (not array)
       allowNull: false,
+    },
+
+    timeline: {
+      type: DataTypes.INTEGER, // minutes
+      allowNull: false,
+      defaultValue: 0,  // default 0 minutes if not provided
+    },
+
+    status: {
+      type: DataTypes.ENUM("completed", "incomplete", "locked"),
+      allowNull: false,
+      defaultValue: "locked",
     },
 
     createdAt: {

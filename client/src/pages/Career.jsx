@@ -10,6 +10,9 @@ import {
   Target, Megaphone, Landmark, Box 
 } from 'lucide-react';
 
+import { createLevel, createTask, getAllCareers, getLevelsByCareerId } from "../services/api";
+import { useNavigate } from "react-router-dom"; // BUG FIX 1: was importing `use` from "react" which doesn't exist. Changed to useNavigate from react-router-dom
+
 
 const INDUSTRY_ICONS = {
   "Engineering": Terminal,
@@ -20,38 +23,6 @@ const INDUSTRY_ICONS = {
   "Finance": Landmark,
   "Other": Box
 };
-/* ── DATA ── */
-const CAREERS = [
-  { id: "frontend", title: "Frontend Developer", industry: "Engineering", avgSalary: "$85k - $145k", growthRate: 15, difficulty: "Beginner Friendly", icon: Monitor, description: "Build beautiful UIs with React, CSS, and modern tooling." },
-  { id: "backend", title: "Backend Developer", industry: "Engineering", avgSalary: "$95k - $160k", growthRate: 12, difficulty: "Intermediate", icon: Server, description: "Design APIs, manage databases, and power server-side logic." },
-  { id: "fullstack", title: "Full Stack Developer", industry: "Engineering", avgSalary: "$100k - $180k", growthRate: 18, difficulty: "Intermediate", icon: Layers, description: "Own the entire stack from UI to database and deployment." },
-  { id: "devops", title: "DevOps Engineer", industry: "Engineering", avgSalary: "$110k - $175k", growthRate: 21, difficulty: "Intermediate", icon: Cloud, description: "CI/CD, containers, cloud infra — keep systems running." },
-  { id: "mobile", title: "Mobile Developer", industry: "Engineering", avgSalary: "$90k - $155k", growthRate: 10, difficulty: "Intermediate", icon: Smartphone, description: "Ship iOS and Android apps with React Native or Swift/Kotlin." },
-  { id: "blockchain", title: "Blockchain Developer", industry: "Engineering", avgSalary: "$120k - $200k", growthRate: 25, difficulty: "Advanced", icon: Link, description: "Smart contracts, DeFi, and decentralized applications." },
-  { id: "cloud", title: "Cloud Engineer", industry: "Engineering", avgSalary: "$105k - $170k", growthRate: 19, difficulty: "Intermediate", icon: Cloud, description: "AWS, GCP, or Azure — architect scalable cloud solutions." },
-  { id: "security", title: "Cybersecurity Engineer", industry: "Engineering", avgSalary: "$115k - $190k", growthRate: 28, difficulty: "Advanced", icon: Shield, description: "Protect systems, conduct pen tests, and secure pipelines." },
-  { id: "embedded", title: "Embedded Systems", industry: "Engineering", avgSalary: "$95k - $150k", growthRate: 7, difficulty: "Advanced", icon: Cpu, description: "Low-level C/C++ for hardware, IoT, and real-time systems." },
-  { id: "qa", title: "QA / Test Engineer", industry: "Engineering", avgSalary: "$70k - $120k", growthRate: 8, difficulty: "Beginner Friendly", icon: Bug, description: "Automated testing, quality assurance, and bug hunting." },
-  { id: "datascience", title: "Data Scientist", industry: "Data & AI", avgSalary: "$110k - $185k", growthRate: 22, difficulty: "Intermediate", icon: BarChart3, description: "Stats, ML models, and storytelling through data." },
-  { id: "mleng", title: "ML Engineer", industry: "Data & AI", avgSalary: "$130k - $210k", growthRate: 32, difficulty: "Advanced", icon: Brain, description: "Deploy and scale machine learning models in production." },
-  { id: "aieng", title: "AI Engineer", industry: "Data & AI", avgSalary: "$125k - $200k", growthRate: 45, difficulty: "Intermediate", icon: Brain, description: "LLMs, RAG pipelines, and AI-powered product engineering." },
-  { id: "dataeng", title: "Data Engineer", industry: "Data & AI", avgSalary: "$110k - $175k", growthRate: 20, difficulty: "Intermediate", icon: Database, description: "ETL pipelines, warehouses, and big data infrastructure." },
-  { id: "dataanalyst", title: "Data Analyst", industry: "Data & AI", avgSalary: "$65k - $110k", growthRate: 15, difficulty: "Beginner Friendly", icon: LineChart, description: "SQL, dashboards, and actionable business insights." },
-  { id: "uxdesign", title: "UX Designer", industry: "Design", avgSalary: "$80k - $140k", growthRate: 12, difficulty: "Beginner Friendly", icon: Compass, description: "User research, wireframes, and end-to-end experiences." },
-  { id: "uidesign", title: "UI Designer", industry: "Design", avgSalary: "$75k - $130k", growthRate: 10, difficulty: "Beginner Friendly", icon: Palette, description: "Figma, design systems, and pixel-perfect visual craft." },
-  { id: "productdesign", title: "Product Designer", industry: "Design", avgSalary: "$95k - $160k", growthRate: 14, difficulty: "Intermediate", icon: PenTool, description: "Strategy + craft: shape the full product experience." },
-  { id: "motion", title: "Motion Designer", industry: "Design", avgSalary: "$70k - $125k", growthRate: 8, difficulty: "Intermediate", icon: Clapperboard, description: "After Effects, Lottie, and bringing interfaces to life." },
-  { id: "pm", title: "Product Manager", industry: "Product", avgSalary: "$100k - $170k", growthRate: 16, difficulty: "Intermediate", icon: Target, description: "Define roadmaps, align teams, and ship products." },
-  { id: "apm", title: "Technical PM", industry: "Product", avgSalary: "$115k - $185k", growthRate: 14, difficulty: "Intermediate", icon: Brain, description: "Bridge engineering and business with technical fluency." },
-  { id: "growthpm", title: "Growth PM", industry: "Product", avgSalary: "$105k - $165k", growthRate: 20, difficulty: "Intermediate", icon: Rocket, description: "Experiments, funnels, and data-driven growth loops." },
-  { id: "growth", title: "Growth Marketer", industry: "Marketing", avgSalary: "$70k - $130k", growthRate: 12, difficulty: "Beginner Friendly", icon: Megaphone, description: "A/B tests, paid channels, and acquisition flywheels." },
-  { id: "seo", title: "SEO Specialist", industry: "Marketing", avgSalary: "$60k - $110k", growthRate: 6, difficulty: "Beginner Friendly", icon: Search, description: "Technical SEO, content strategy, and organic growth." },
-  { id: "contentmkt", title: "Content Marketer", industry: "Marketing", avgSalary: "$55k - $100k", growthRate: 5, difficulty: "Beginner Friendly", icon: FileText, description: "Long-form content, social, and brand storytelling." },
-  { id: "fintech", title: "Fintech Analyst", industry: "Finance", avgSalary: "$90k - $150k", growthRate: 11, difficulty: "Intermediate", icon: CreditCard, description: "Financial modeling, payments, and fintech products." },
-  { id: "quant", title: "Quantitative Analyst", industry: "Finance", avgSalary: "$150k - $300k+", growthRate: 9, difficulty: "Advanced", icon: TrendingUp, description: "Math-heavy modeling for trading and risk analysis." },
-  { id: "techwrite", title: "Technical Writer", industry: "Other", avgSalary: "$75k - $125k", growthRate: 10, difficulty: "Beginner Friendly", icon: FileText, description: "Docs, API references, and developer education content." },
-  { id: "scrum", title: "Scrum Master", industry: "Other", avgSalary: "$85k - $140k", growthRate: 13, difficulty: "Beginner Friendly", icon: RefreshCcw, description: "Ceremonies, retrospectives, and agile team coaching." }
-];
 
 const CATEGORIES = ["All","Engineering","Data & AI","Design","Product","Marketing","Finance","Other"];
 const LEVELS     = ["All Levels","Beginner Friendly","Intermediate","Advanced"];
@@ -77,6 +48,7 @@ const FADE_PEEK = 3;
 
 /* ── PAGE ── */
 export default function CareersPage() {
+  const navigate = useNavigate(); // BUG FIX 1 (continued): moved here so it's used properly
   const [mounted,  setMounted]  = useState(false);
   const [search,   setSearch]   = useState("");
   const [category, setCategory] = useState("All");
@@ -84,22 +56,146 @@ export default function CareersPage() {
   const [selected, setSelected] = useState(null);
   const [expanded, setExpanded] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
+  const [careers, setCareers] = useState([]);
 
   useEffect(() => { setTimeout(() => setMounted(true), 60); }, []);
   useEffect(() => { setExpanded(false); }, [search, category, level]);
 
-  const filtered = useMemo(() => CAREERS.filter(c => {
+  useEffect(() => {
+    const getCareersFromApi = async () => {
+      try {
+        const response = await getAllCareers();
+        if (response.data.success) {
+          const careersFromApi = response.data.data.map(c => ({
+            id: c.id,
+            label: c.title,
+            title: c.title,           // BUG FIX 2: card uses career.title but mapping only set career.label
+            description: c.description, // BUG FIX 2: card uses career.description but mapping only set career.desc
+            category: c.industry,
+            industry: c.industry,     // BUG FIX 2: card uses career.industry for INDUSTRY_ICONS lookup
+            tag: c.tags.length > 0 ? c.tags[0] : null,
+            weeks: 16,
+            level: c.difficulty,
+            difficulty: c.difficulty, // BUG FIX 2: card uses career.difficulty directly
+            icon: INDUSTRY_ICONS[c.industry] || Box,
+            desc: c.description,
+            avgSalary: c.avg_salary ? `$${c.avg_salary.toLocaleString()}` : "N/A", // BUG FIX 2: floating bar uses selCareer.avgSalary
+            growthRate: c.growth_rate ? c.growth_rate.replace(/[^0-9]/g, '') : "0", // BUG FIX 2: floating bar uses selCareer.growthRate — strip to number only
+          }));
+          setCareers(careersFromApi);
+        } else {
+          console.error("Failed to fetch careers:", response.data.message);
+        }
+      } catch (error) {
+        console.error("Error fetching careers:", error.message);
+      }
+    };
+
+    getCareersFromApi();
+  }, []);
+
+  // BUG FIX 3: `careers` was missing from useMemo deps — filtered was always []
+  // because the memo ran once on mount when careers=[] and never re-ran after API loaded
+  const filtered = useMemo(() => careers.filter(c => {
     if (category !== "All" && c.category !== category) return false;
     if (level !== "All Levels" && c.level !== level)   return false;
     const q = search.toLowerCase();
     return !q || c.label.toLowerCase().includes(q) || c.desc.toLowerCase().includes(q);
-  }), [search, category, level]);
+  }), [search, category, level, careers]); // ← careers added
 
   const needsMore   = !expanded && filtered.length > INITIAL;
   const solidCards  = needsMore ? filtered.slice(0, INITIAL) : filtered;
   const fadedCards  = needsMore ? filtered.slice(INITIAL, INITIAL + FADE_PEEK) : [];
   const hiddenCount = filtered.length - INITIAL;
-  const selCareer   = CAREERS.find(c => c.id === selected);
+  const selCareer   = careers.find(c => c.id === selected);
+
+const handleStart = async () => {
+  console.log("Starting roadmap for career:", selCareer);
+  if (!selCareer) return;
+
+  try {
+    // 1️⃣ Check if Levels Exist for This Career
+    const levelsResponse = await getLevelsByCareerId(selCareer.id);
+
+    // If levels exist, directly navigate to the roadmap
+    if (levelsResponse.data.success && levelsResponse.data.levels.length > 0) {
+      console.log("Levels already exist, navigating to roadmap.");
+      navigate("/roadmap", {
+        state: {
+          careerId: selCareer.id,
+          careerLabel: selCareer.label,
+        },
+      });
+      return; // Stop further execution if levels are found
+    }
+
+    // 2️⃣ If Levels Do Not Exist, Create Levels and Tasks
+    console.log("No levels found, creating levels and tasks.");
+    const levelNames = ["beginner", "intermediate", "advance"];
+    const createdLevels = [];
+
+    // Create Levels
+    for (const name of levelNames) {
+      const res = await createLevel({
+        level_name: name,
+        careerId: selCareer.id,
+      });
+
+      if (res.data.success) {
+        createdLevels.push(res.data.level);
+      }
+      console.log(createdLevels);
+    }
+
+    // 3️⃣ Create Tasks for Each Level
+    const defaultTasks = {
+      beginner: [
+        "Understand fundamentals",
+        "Set up development environment",
+        "Complete beginner tutorials",
+      ],
+      intermediate: [
+        "Build small projects",
+        "Learn advanced concepts",
+        "Practice problem solving",
+      ],
+      advance: [
+        "Build 2 portfolio projects",
+        "Deploy project online",
+        "Write project documentation",
+      ],
+    };
+
+    // Loop through the created levels
+    for (const level of createdLevels) {
+  const tasksArray = defaultTasks[level.level_name] || [];
+
+  if (tasksArray.length > 0) {
+    const taskResponse = await createTask({
+      level_id: level.level_id,  // Correct level_id
+      taskName: tasksArray,      // Send array of tasks
+    });
+
+    if (taskResponse.data.success) {
+      console.log(`Tasks for level "${level.level_name}" created successfully!`);
+    } else {
+      console.error(`Failed to create tasks for level "${level.level_name}"`);
+    }
+  }
+}
+
+    // 4️⃣ After Creation, Navigate to Roadmap
+    navigate("/roadmap", {
+      state: {
+        careerId: selCareer.id,
+        careerLabel: selCareer.label,
+      },
+    });
+
+  } catch (error) {
+    console.error("Error creating roadmap:", error.message);
+  }
+};
 
   return (
     <>
@@ -285,7 +381,7 @@ export default function CareersPage() {
                 <div
                   className="absolute left-0 right-0 pointer-events-none"
                   style={{
-                    top: "calc(100% - 260px - 52px)", /* starts at top of faded card row */
+                    top: "calc(100% - 260px - 52px)",
                     height: 280,
                     background: "linear-gradient(to bottom, rgba(242,241,239,0.0) 0%, rgba(242,241,239,0.45) 30%, rgba(242,241,239,0.85) 58%, #f9fafb 78%, #f9fafb 100%)",
                   }}
@@ -346,7 +442,7 @@ export default function CareersPage() {
               </h4>
             </div>
 
-            {/* Section 2: Stats (Simplified) */}
+            {/* Section 2: Stats */}
             <div className="hidden sm:flex items-center gap-8 px-8 border-l border-white/10">
               <div className="flex flex-col">
                 <span className="text-[9px] text-white/30 font-bold uppercase tracking-widest mb-0.5">Market Pay</span>
@@ -360,9 +456,8 @@ export default function CareersPage() {
 
             {/* Section 3: Action Buttons */}
             <div className="flex items-center gap-2">
-              {/* Shortened punchy CTA */}
               <button 
-                
+                onClick={() => handleStart()}
                 className="group flex items-center gap-2 bg-[#F5C842] hover:bg-[#FFD84D] text-[#1A1A1A] text-[13px] font-black rounded-full px-8 py-3.5 transition-all hover:scale-[1.03] active:scale-95 cursor-pointer shadow-lg shadow-[#F5C842]/10">
                 Start Journey
                 <ArrowRight size={16} strokeWidth={3} className="transition-transform group-hover:translate-x-1" />
@@ -441,7 +536,7 @@ function CareerCard({ career, selected, onSelect, animDelay, faded }) {
           </p>
         </div>
 
-        {/* Stats Grid - No more black! Using soft neutrals and yellow accents */}
+        {/* Stats Grid */}
         <div className={`
           grid grid-cols-2 gap-4 p-4 rounded-2xl transition-all duration-500
           ${selected 
@@ -473,7 +568,7 @@ function CareerCard({ career, selected, onSelect, animDelay, faded }) {
             </span>
           </div>
 
-          {/* Start Button - Subtle text link instead of dark button */}
+          {/* Start Button */}
           <div className={`
             flex items-center gap-1 transition-all duration-300
             ${selected ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-4'}
