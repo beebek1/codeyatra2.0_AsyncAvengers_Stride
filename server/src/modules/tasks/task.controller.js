@@ -3,20 +3,26 @@ import Level from "../levels/level.model.js";
 import Career from "../careers/career.model.js";
 
 // ==============================
-// CREATE TASKS
+// CREATE TASKS (supports single or multiple tasks)
 // ==============================
 export const createTask = async (req, res) => {
-  const { level_id, taskName, timeline } = req.body;
+  const { level_id, taskName, timeline, priority } = req.body;
 
-  if (
-    !level_id ||
-    !Array.isArray(taskName) ||
-    taskName.length === 0 ||
-    (timeline && (!Array.isArray(timeline) || timeline.length !== taskName.length))
-  ) {
+  // Validate input
+  if (!level_id || !taskName || !Array.isArray(taskName) || taskName.length === 0) {
     return res.status(400).json({
       success: false,
       message: "level_id and taskName (array) are required.",
+    });
+  }
+
+  const timelines = Array.isArray(timeline) ? timeline : taskName.map(() => 0);
+  const priorities = Array.isArray(priority) ? priority : taskName.map(() => "medium");
+
+  if (timelines.length !== taskName.length || priorities.length !== taskName.length) {
+    return res.status(400).json({
+      success: false,
+      message: "timeline and priority arrays must match taskName array length",
     });
   }
 
@@ -26,18 +32,28 @@ export const createTask = async (req, res) => {
       return res.status(404).json({ success: false, message: "Level not found" });
     }
 
+    // Map tasks to insert
     const tasksToInsert = taskName.map((name, index) => ({
       level_id,
       taskName: name,
-      timeline: timeline ? timeline[index] : 0,
+      timeline: timelines[index],
+      priority: priorities[index], // ✅ now saving AI priority
       status: "incomplete",
     }));
 
     const createdTasks = await Task.bulkCreate(tasksToInsert);
 
-    return res.status(201).json({ success: true, message: "Tasks created successfully", tasks: createdTasks });
+    return res.status(201).json({
+      success: true,
+      message: "Tasks created successfully",
+      tasks: createdTasks,
+    });
   } catch (error) {
-    return res.status(500).json({ success: false, message: "Failed to create tasks", error: error.message });
+    return res.status(500).json({
+      success: false,
+      message: "Failed to create tasks",
+      error: error.message,
+    });
   }
 };
 
@@ -47,8 +63,15 @@ export const createTask = async (req, res) => {
 export const getAllTasks = async (req, res) => {
   try {
     const tasks = await Task.findAll({
-      include: [{ model: Level, as: "level", include: [{ model: Career, as: "career", attributes: ["id", "title", "industry"] }] }],
+      include: [
+        {
+          model: Level,
+          as: "level",
+          include: [{ model: Career, as: "career", attributes: ["id", "title", "industry"] }],
+        },
+      ],
     });
+
     return res.status(200).json({ success: true, tasks });
   } catch (error) {
     return res.status(500).json({ success: false, message: "Failed to fetch tasks", error: error.message });
@@ -63,7 +86,13 @@ export const getTasksByLevel = async (req, res) => {
   try {
     const tasks = await Task.findAll({
       where: { level_id },
-      include: [{ model: Level, as: "level", include: [{ model: Career, as: "career", attributes: ["id", "title", "industry"] }] }],
+      include: [
+        {
+          model: Level,
+          as: "level",
+          include: [{ model: Career, as: "career", attributes: ["id", "title", "industry"] }],
+        },
+      ],
     });
     return res.status(200).json({ success: true, tasks });
   } catch (error) {
@@ -72,7 +101,7 @@ export const getTasksByLevel = async (req, res) => {
 };
 
 // ==============================
-// UPDATE TASK — ✅ now handles both taskName AND status
+// UPDATE TASK (name and/or status)
 // ==============================
 export const updateTask = async (req, res) => {
   const { id } = req.params;
@@ -99,7 +128,7 @@ export const updateTask = async (req, res) => {
 };
 
 // ==============================
-// UPDATE TASK STATUS (dedicated endpoint — keep for future use)
+// UPDATE TASK STATUS ONLY
 // ==============================
 export const updateTaskStatus = async (req, res) => {
   const { id } = req.params;
@@ -108,7 +137,10 @@ export const updateTaskStatus = async (req, res) => {
   const allowedStatus = ["completed", "incomplete", "progress"];
 
   if (!status || !allowedStatus.includes(status)) {
-    return res.status(400).json({ success: false, message: "Valid status required: completed, incomplete, progress" });
+    return res.status(400).json({
+      success: false,
+      message: "Valid status required: completed, incomplete, progress",
+    });
   }
 
   try {
@@ -121,6 +153,10 @@ export const updateTaskStatus = async (req, res) => {
 
     return res.status(200).json({ success: true, message: "Task status updated successfully", task });
   } catch (error) {
-    return res.status(500).json({ success: false, message: "Failed to update task status", error: error.message });
+    return res.status(500).json({
+      success: false,
+      message: "Failed to update task status",
+      error: error.message,
+    });
   }
 };

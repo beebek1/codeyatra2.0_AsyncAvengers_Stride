@@ -31,6 +31,12 @@ const Task = sequelize.define(
       allowNull: false,
     },
 
+    priority: {
+      type: DataTypes.ENUM("low", "medium", "high"),
+      allowNull: false,
+      defaultValue: "medium",
+    },
+
     status: {
       type: DataTypes.ENUM("completed", "incomplete", "progress"),
       allowNull: false,
