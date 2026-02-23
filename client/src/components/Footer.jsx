@@ -31,30 +31,6 @@ const Footer = () => {
               Empowering students and professionals to navigate their careers
               with clarity, purpose, and data-driven roadmaps.
             </p>
-
-            {/* Newsletter */}
-            <div>
-              <h3 className="text-sm font-bold text-white uppercase tracking-widest mb-4">
-                Stay Updated
-              </h3>
-
-              <form
-                className="flex rounded-md overflow-hidden bg-white"
-                onSubmit={(e) => e.preventDefault()}
-              >
-                <input
-                  type="email"
-                  placeholder="Enter your email"
-                  className="w-full px-4 py-2 text-sm text-gray-800 focus:outline-none"
-                />
-                <button
-                  type="submit"
-                  className="bg-black text-white px-5 text-sm font-medium hover:bg-gray-900 transition"
-                >
-                  Subscribe
-                </button>
-              </form>
-            </div>
           </div>
 
           {/* Product */}
