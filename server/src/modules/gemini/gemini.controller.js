@@ -37,17 +37,20 @@ set timeline for each tasks in each level such that all courses must be complete
     {
       "name": "beginner",
       "tasks": ["task1", "task2", "task3", "task4", "task5"],
-      "timeline" : [time required for each task to learn]
+      "timeline" : [time required for each task to learn],
+      "priority" : [choose between high, medium, low for each task based on importance and difficulty]
     },
     {
       "name": "intermediate",
       "tasks": ["task1", "task2", "task3", "task4", "task5"],
-      "timeline" : [time required for each task to learn]
+      "timeline" : [time required for each task to learn],
+      "priority" : [choose between high, medium, low for each task based on importance and difficulty]
     },
     {
       "name": "advanced",
       "tasks": ["task1", "task2", "task3", "task4", "task5"],
-      "timeline" : [time required for each task to learn]
+      "timeline" : [time required for each task to learn],
+      "priority" : [choose between high, medium, low for each task based on importance and difficulty]
     }
   ]
 }
