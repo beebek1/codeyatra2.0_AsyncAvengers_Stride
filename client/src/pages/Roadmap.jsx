@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Lock, CheckCircle, Play, Star, Zap, TrendingUp } from 'lucide-react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { getLevelsByCareerId } from '../services/api';
 import toast from 'react-hot-toast';
 
 const PANEL_WIDTH = 420;
 
 export default function RoadmapPage() {
+  const navigate = useNavigate();
   const location = useLocation();
   const { careerId, careerLabel } = location.state || {};
 
@@ -29,8 +30,6 @@ export default function RoadmapPage() {
         const levels = res?.data?.levels || [];
         setCareerLevels(levels);
 
-        // Build progress map from backend data
-        // Expects each level to have: { id, completion (0-100) }
         const initialProgress = {};
         levels.forEach((level) => {
           initialProgress[level.id] = level.completion ?? 0;
@@ -51,16 +50,19 @@ export default function RoadmapPage() {
     careerLevels.length > 0 &&
     careerLevels.every((level) => (progress[level.id] ?? 0) === 100);
 
-  const panelOpen = activePanel !== null;
-  const openPanel = (levelId) => setActivePanel(levelId);
-  const closePanel = () => setActivePanel(null);
+    const onClickHandler = (i, level_id) =>{
+      setActivePanel(i);
+
+      console.log("this is console",i, level_id);
+      navigate("/trello", { state: { level_id: level_id } }); 
+        
+    }
 
   const handleLevelComplete = (levelId) => {
     setProgress((prev) => ({ ...prev, [levelId]: 100 }));
     setActivePanel(null);
   };
 
-  // Align alternates: left, right, left, right...
   const getAlign = (index) => (index % 2 === 0 ? 'left' : 'right');
 
   if (loading) {
@@ -85,9 +87,7 @@ export default function RoadmapPage() {
 
   return (
     <div className="min-h-screen w-full bg-[#fafafa] flex flex-row overflow-hidden font-sans text-gray-900 selection:bg-[#f5c842] selection:text-black">
-
       <div className="flex-1 flex flex-col min-h-screen overflow-y-auto transition-all duration-500">
-
         <header className="h-32 md:h-48 flex-shrink-0 flex flex-col items-center justify-center z-20">
           {isFullyCompleted ? (
             <div className="animate-bounce flex items-center gap-2 px-6 py-3 bg-white border border-gray-100 text-black rounded-full font-bold tracking-wider uppercase text-sm shadow-[0_8px_30px_rgb(245,200,66,0.2)]">
@@ -112,10 +112,10 @@ export default function RoadmapPage() {
             const isUnlocked = level.status;
             const currentProgress = progress[level.id] ?? 0;
             const isCompleted = currentProgress === 100;
-            const isActive = activePanel === level.id;
+            const isActive = activePanel === i;
 
             return (
-              <div key={level.id} className="relative w-full flex flex-col">
+              <div key={`level-${i}`} className="relative w-full flex flex-col">
                 {i > 0 && (
                   <SnakeCurve
                     direction={align === 'right' ? 'left-to-right' : 'right-to-left'}
@@ -134,7 +134,7 @@ export default function RoadmapPage() {
                           isCompleted={isCompleted}
                           isFirst={i === 0}
                           isActive={isActive}
-                          onClick={() => isUnlocked && openPanel(level.id)}
+                          onStartClick={() => onClickHandler(i, level.level_id)}
                         />
                       </div>
                       <div className="col-span-1" />
@@ -150,7 +150,7 @@ export default function RoadmapPage() {
                           isCompleted={isCompleted}
                           isFirst={i === 0}
                           isActive={isActive}
-                          onClick={() => isUnlocked && openPanel(level.id)}
+                          onStartClick={() => onClickHandler(i, level.level_id)}
                         />
                       </div>
                     </>
@@ -201,44 +201,48 @@ const SnakeCurve = ({ direction, isUnlocked }) => {
   );
 };
 
-function RoadmapCard({ level, isUnlocked, isCompleted, isFirst, isActive, onClick }) {
-  // Mock data - replace with level.topics or level.difficulty
+function RoadmapCard({ level, isUnlocked, isCompleted, isFirst, isActive, onStartClick }) {
+  const [isHovered, setIsHovered] = useState(false);
+
   const tags = level.tags || ["Core Theory", "Hands-on", "AI Review"];
   const marketDemand = level.demand || "High";
 
   return (
     <div className={`w-full max-w-sm relative ${isFirst ? 'pt-0' : 'pt-10'}`}>
-      {/* Connector Node */}
       {!isFirst && (
         <div className="absolute -top-7 left-1/2 -translate-x-1/2 z-20">
           <div className={`w-14 h-14 rounded-full border-[5px] flex items-center justify-center bg-white transition-all duration-500
-            ${isCompleted ? 'border-[#111827] shadow-lg' : isUnlocked ? 'border-[#F5C842] shadow-[0_0_20px_rgba(245,200,66,0.3)]' : 'border-gray-100 shadow-sm'}`}
+            ${isCompleted
+              ? 'border-[#111827] shadow-lg'
+              : isUnlocked
+                ? 'border-[#F5C842] shadow-[0_0_20px_rgba(245,200,66,0.3)]'
+                : 'border-gray-100 shadow-sm'
+            }`}
           >
             {isCompleted ? (
               <CheckCircle size={22} strokeWidth={3} className="text-[#111827]" />
             ) : isUnlocked ? (
               <div className="w-3 h-3 rounded-full bg-[#F5C842] animate-pulse" />
             ) : (
-              <Lock size={18} strokeWidth={2.5} className="text-gray-300" />
+              <div className="w-3 h-3 rounded-full bg-gray-200" />
             )}
           </div>
         </div>
       )}
 
-      {/* Main Card */}
       <div
-        onClick={isUnlocked ? onClick : undefined}
-        className={`w-full rounded-[2rem] p-7 transition-all duration-500 relative group z-10 border-2
-          ${isActive 
-            ? 'bg-white border-[#111827] shadow-[12px_12px_0px_0px_rgba(17,24,39,1)] scale-[1.02] cursor-pointer' 
+        onMouseEnter={() => isUnlocked && setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        className={`w-full rounded-[2rem] p-7 transition-all duration-300 relative z-10 border-2
+          ${isActive
+            ? 'bg-white border-[#111827] shadow-[12px_12px_0px_0px_rgba(17,24,39,1)] scale-[1.02]'
             : isCompleted
-              ? 'bg-white border-gray-200 shadow-sm hover:shadow-[8px_8px_0px_0px_rgba(17,24,39,0.1)] hover:-translate-y-1 cursor-pointer'
+              ? `bg-white border-gray-200 ${isHovered ? 'shadow-[8px_8px_0px_0px_rgba(17,24,39,1)] -translate-y-1' : 'shadow-sm'}`
               : isUnlocked
-                ? 'bg-white border-[#F5C842] shadow-sm hover:shadow-[8px_8px_0px_0px_rgba(245,200,66,0.2)] hover:-translate-y-1 cursor-pointer'
-                : 'bg-[#F9FAFB] border-dashed border-gray-200 opacity-60 cursor-not-allowed'
+                ? `bg-white border-[#F5C842] ${isHovered ? 'shadow-[8px_8px_0px_0px_rgba(17,24,39,1)] -translate-y-1' : 'shadow-sm'}`
+                : 'bg-[#F9FAFB] border-dashed border-gray-200 opacity-60'
           }`}
       >
-        {/* Header: Level & Demand */}
         <div className="flex justify-between items-start mb-6">
           <div>
             <span className={`text-[10px] font-black uppercase tracking-[0.2em] ${isUnlocked ? 'text-[#F5C842]' : 'text-gray-400'}`}>
@@ -248,7 +252,7 @@ function RoadmapCard({ level, isUnlocked, isCompleted, isFirst, isActive, onClic
               {level.level_name}
             </h3>
           </div>
-          
+
           {isUnlocked && (
             <div className="flex flex-col items-end">
               <div className="flex items-center gap-1 text-[10px] font-black text-green-600 uppercase">
@@ -260,16 +264,17 @@ function RoadmapCard({ level, isUnlocked, isCompleted, isFirst, isActive, onClic
           )}
         </div>
 
-        {/* Tags Section (Replaces Progress Bar) */}
         <div className="space-y-3">
           <div className="flex flex-wrap gap-2">
-            {tags.map((tag, i) => (
-              <span 
-                key={i}
-                className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-tight border transition-all
-                  ${!isUnlocked 
-                    ? 'border-gray-100 text-gray-300' 
-                    : 'border-gray-100 bg-gray-50 text-gray-500 group-hover:border-[#111827] group-hover:text-[#111827]'
+            {tags.map((tag, idx) => (
+              <span
+                key={idx}
+                className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-tight border transition-all duration-300
+                  ${!isUnlocked
+                    ? 'border-gray-100 text-gray-300'
+                    : isHovered || isActive
+                      ? 'border-[#111827] text-[#111827] bg-gray-50'
+                      : 'border-gray-100 bg-gray-50 text-gray-500'
                   }`}
               >
                 {tag}
@@ -277,13 +282,12 @@ function RoadmapCard({ level, isUnlocked, isCompleted, isFirst, isActive, onClic
             ))}
           </div>
           <p className={`text-xs leading-relaxed ${isUnlocked ? 'text-gray-500' : 'text-gray-300'}`}>
-            {isUnlocked 
-              ? "Master the industry standards required for top-tier roles." 
+            {isUnlocked
+              ? "Master the industry standards required for top-tier roles."
               : "Complete previous modules to unlock this syllabus."}
           </p>
         </div>
 
-        {/* Footer: Dynamic Status */}
         <div className="mt-8 pt-6 border-t border-gray-50 flex items-center justify-between">
           <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest
             ${isCompleted ? 'bg-[#111827] text-white' : isUnlocked ? 'bg-[#F5C842]/10 text-[#C8980A]' : 'bg-gray-100 text-gray-400'}`}>
@@ -291,10 +295,21 @@ function RoadmapCard({ level, isUnlocked, isCompleted, isFirst, isActive, onClic
           </div>
 
           {isUnlocked && (
-            <div className="flex items-center gap-1.5 text-[#111827] font-black text-xs uppercase group-hover:translate-x-1 transition-transform">
+            <button
+              onClick={onStartClick}
+              className={`flex cursor-pointer items-center gap-2 px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all duration-300 border-2
+                ${isActive
+                  ? 'bg-[#111827] text-white border-[#111827]'
+                  : 'bg-white text-[#111827] border-[#111827] hover:bg-[#111827] hover:text-white active:scale-95'
+                }`}
+            >
               <span>{isCompleted ? 'Review' : 'Start'}</span>
-              <Play size={14} fill="currentColor" />
-            </div>
+              <Play
+                size={12}
+                fill="currentColor"
+                className={`transition-transform duration-300 ${isHovered ? 'translate-x-0.5' : ''}`}
+              />
+            </button>
           )}
         </div>
       </div>
