@@ -13,6 +13,7 @@ import CareersPage from './pages/Career';
 import Schedule from './pages/Schedule';
 import Kanban from './components/Kanban';
 import ProtectedRoute from './protected/ProtectedROute';
+import Trello from './pages/Trello';
 import Account from './pages/Account';
 import Roadmap from './pages/Roadmap';
 
@@ -43,8 +44,8 @@ function AppWrapper() {
           <Route path="/schedule" element={<ProtectedRoute element={<Schedule />} />} />
           <Route path="/account" element={<ProtectedRoute element={<Account />} />} />
           <Route path="/roadmap" element={<Roadmap/>} />
+          <Route path="/board" element={<ProtectedRoute element={<Trello />} />} />
           
-
           
 
 
