@@ -67,7 +67,7 @@ export default function Navbar({ user = MOCK_USER }) {
         }
       `}</style>
 
-      <div className="navbar-root w-full px-4 pt-4 pb-2 sticky top-0 z-50 bg-transparent">
+      <div className="navbar-root w-full px-4 pt-4 pb-2 sticky top-0 z-50 bg-transparent relative z-1000">
         <div className="max-w-3xl mx-auto relative" ref={menuRef}>
 
           <div className="flex items-center justify-between px-5 h-14 rounded-full bg-[#E6E6E6] shadow-[0_4px_12px_rgba(0,0,0,0.08)] transition-shadow duration-300">
@@ -77,8 +77,8 @@ export default function Navbar({ user = MOCK_USER }) {
               <div className="w-8 h-8 rounded-lg flex items-center justify-center group-hover:scale-105 transition-transform duration-200 overflow-hidden">
                 <img src="/favicon.png" alt="icon" className="w-full h-full object-cover" />
               </div>
-              <span className="h-5 flex items-center">
-                <img src={Logo} alt="Stride" className="h-full w-auto object-contain" />
+              <span className="h-6 self-start">
+                <img src={Logo} alt="Stride" className="h-full w-auto align-top" />
               </span>
             </button>
 
