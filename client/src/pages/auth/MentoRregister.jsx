@@ -7,7 +7,7 @@ import toast from 'react-hot-toast'
 import gmail from "../../assets/gmail.png"
 import { registerUser } from '../../services/api'
 
-const Register = () => {
+const MentorRegister = () => {
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [form, setForm] = useState({ fullName: '', email: '', password: '', confirmPassword: '' })
@@ -197,12 +197,12 @@ const Register = () => {
 
           {/* For mentor */}
           <div className="text-center mt-4">
-            <p className="text-gray-500 text-sm">Are you a mentor?</p>
+            <p className="text-gray-500 text-sm">Are you a User?</p>
             <button
-              onClick={() => navigate('/mentor')}
+              onClick={() => navigate('/register')}
               className="mt-2 w-full border border-black text-black py-2 rounded-md hover:bg-gray-100 transition"
             >
-              Register as a Mentor
+              Register as a User
             </button>
           </div>
 
@@ -212,4 +212,4 @@ const Register = () => {
   )
 }
 
-export default Register
+export default MentorRegister

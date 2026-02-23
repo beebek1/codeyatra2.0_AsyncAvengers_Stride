@@ -140,6 +140,8 @@ const Login = () => {
             <a href="/register" className="font-medium text-gray-900 hover:text-black">Sign Up</a>
           </p>
 
+           
+
         </div>
       </div>
     </div>

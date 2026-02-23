@@ -11,9 +11,10 @@ import QuizPage from './pages/Quizpage';
 import { ScrollToTop, NotFound } from './components/Elements';
 import CareersPage from './pages/Career';
 import Schedule from './pages/Schedule';
-// import Kanban from './components/Kanban';
 import ProtectedRoute from './protected/ProtectedROute';
 import Trello from './pages/Trello';
+import MentoRregister from './pages/auth/MentoRregister';
+
 import Account from './pages/Account';
 import Roadmap from './pages/Roadmap';
 
@@ -42,6 +43,7 @@ function AppWrapper() {
         <Route path="/" element={<Dashboard />} />
         <Route path="/careers" element={<CareersPage />} />
         <Route path="/roadmap" element={<Roadmap />} />
+       <Route path="/mentor" element={<MentoRregister />} />
         <Route path="/trello" element={<Trello />} />
 
         {/* Protected Routes */}
