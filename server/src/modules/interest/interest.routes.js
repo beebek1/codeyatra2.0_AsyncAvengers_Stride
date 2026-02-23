@@ -1,7 +1,6 @@
 import { Router } from "express";
 import { addInterest, getUserInterests } from "./interest.controller.js";
 import authGuard from "../../middleware/authGuard.js";
-
 const router = Router();
 
 // Add new interest(s) for a user

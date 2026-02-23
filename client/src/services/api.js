@@ -33,3 +33,26 @@ export const getLevelsByCareerId = (careerId) => Api.get(`/api/level/career/${ca
 
 export const createTask = (data) => Api.post("/api/task/createTask", data, config);
 export const getTasksByLevelId = (levelId) => Api.get(`/api/task/getTask/${levelId}`);
+
+export const getMe = () => Api.get("/api/auth/getme", config);
+
+export const addUserInterests = (interests, educationLevel, description = "") => {
+  return Api.post(
+    "/api/interest",
+    {
+      interests,
+      educationLevel,
+      description,
+    },
+    {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+    }
+  );
+};
+
+export const getUserInterests = (userId) => {
+  return Api.get(`/api/interest/${userId}`, config);
+};
+};

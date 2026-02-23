@@ -2,18 +2,27 @@ import Interest from "./interest.models.js";
 
 // Add multiple interests for a user
 export const addInterest = async (req, res) => {
-  const { userId, interests, description, educationLevel } = req.body;
+    console.log("🔥 HIT CONTROLLER");
 
-  if (!userId || !interests || !Array.isArray(interests) || interests.length === 0) {
+  console.log("BODY RECEIVED:", req.body);
+  const {  interests, description, educationLevel } = req.body;
+
+  if ( !interests || !Array.isArray(interests) || interests.length === 0) {
     return res.status(400).json({
       success: false,
       message: "userId and interests array are required",
     });
   }
+  if(!req.user || !req.user.userId){
+    return res.status(401).json({
+      success: false,
+      message: "Unauthorized: User not authenticated",
+    });
+  }
 
   try {
     const newInterest = await Interest.create({
-      userId,
+      userId: req.user.userId, // Get userId from authenticated user
       interests,
       description,
       educationLevel,

@@ -27,8 +27,7 @@ function AppWrapper() {
   const hideComponents = location.pathname === '/register' || location.pathname === '/forgot-password' || location.pathname === '/login'
 
   return (
-    // Added flex flex-col and min-h-screen to push the footer to the bottom
-    <div className="flex flex-col min-h-screen w-full">
+    <div>
       <Toaster position='top-right' />
       { !hideComponents && <Navbar/> }
       <Routes>
@@ -43,7 +42,6 @@ function AppWrapper() {
             {/* Protected routes */}
           <Route path="/quiz" element={<ProtectedRoute element={<QuizPage />} />} />
           <Route path="/schedule" element={<ProtectedRoute element={<Schedule />} />} />
-          <Route path="/kanban" element={<ProtectedRoute element={<Kanban />} />} />
           <Route path="/account" element={<ProtectedRoute element={<Account />} />} />
           <Route path="/roadmap" element={<Roadmap/>} />
 

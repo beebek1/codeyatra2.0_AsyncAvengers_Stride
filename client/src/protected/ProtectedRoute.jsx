@@ -1,9 +1,10 @@
 import { Navigate } from "react-router-dom";
 import { isLoggedIn } from "./Auth";
+import NotLoggedIn from '../components/NotLoggedIn';
 
 const ProtectedRoute = ({ element }) => {
   if (!isLoggedIn()) {
-    return <Navigate to="/login" replace />;
+    return <NotLoggedIn/>
   }
 
   return element;
