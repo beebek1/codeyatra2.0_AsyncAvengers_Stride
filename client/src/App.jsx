@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import React from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 
@@ -8,7 +8,7 @@ import Register from './pages/auth/Register';
 import Dashboard from './pages/Dashboard';
 import ForgotPassword from './pages/auth/ForgotPassword';
 import QuizPage from './pages/Quizpage';
-import { ScrollToTop , NotFound, LoadingScreen} from './components/Elements';
+import { ScrollToTop, NotFound } from './components/Elements';
 import CareersPage from './pages/Career';
 import Schedule from './pages/Schedule';
 import ProtectedRoute from './protected/ProtectedROute';
@@ -23,54 +23,61 @@ import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 
 function AppWrapper() {
-
   const location = useLocation();
-  const hideComponents = location.pathname === '/register' || location.pathname === '/forgot-password' || location.pathname === '/login'
+  
+  // Logic to hide Navbar/Footer on Auth pages
+  const hideComponents = ['/register', '/forgot-password', '/login'].includes(location.pathname);
 
   return (
-    <div>
-      <Toaster position='top-right' />
-      { !hideComponents && <Navbar/> }
+    <div className="app-container">
+      <Toaster position="top-right" />
+      
+      {!hideComponents && <Navbar />}
+
       <Routes>
-           
-           <Route path="/login" element={<Login/>} />   
-           <Route path="/register" element={<Register/>} />
-           <Route path="/mentor" element={<MentoRregister />} />
-   
-           <Route path="/" element={<Dashboard/>} />
-           <Route path="/forgot-password" element={<ForgotPassword/>} />
-           <Route path="/careers" element={<CareersPage/>} />
-           <Route path="/kanban" element={<Trello/>} />
+        {/* Public Routes */}
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        
+        <Route path="/" element={<Dashboard />} />
+        <Route path="/careers" element={<CareersPage />} />
+        <Route path="/roadmap" element={<Roadmap />} />
+       <Route path="/mentor" element={<MentoRregister />} />
+        <Route path="/trello" element={<Trello />} />
 
-            {/* Protected routes */}
-          <Route path="/quiz" element={<ProtectedRoute element={<QuizPage />} />} />
-          <Route path="/schedule" element={<ProtectedRoute element={<Schedule />} />} />
-          <Route path="/account" element={<ProtectedRoute element={<Account />} />} />
-          <Route path="/roadmap" element={<Roadmap/>} />
-          <Route path="/board" element={<ProtectedRoute element={<Trello />} />} />
-          
-          
+        {/* Protected Routes */}
+        <Route 
+          path="/quiz" 
+          element={<ProtectedRoute element={<QuizPage />} />} 
+        />
+        <Route 
+          path="/schedule" 
+          element={<ProtectedRoute element={<Schedule />} />} 
+        />
+        <Route 
+          path="/account" 
+          element={<ProtectedRoute element={<Account />} />} 
+        />
+        <Route 
+          path="/board" 
+          element={<ProtectedRoute element={<Trello />} />} 
+        />
 
-
-        {/* fallout */}
+        {/* Fallback Route */}
         <Route path="*" element={<NotFound />} />
-
       </Routes>
 
-      { !hideComponents && <Footer />}
+      {!hideComponents && <Footer />}
     </div>
   );
 }
 
-function App() {
+export default function App() {
   return (
     <Router>
       <ScrollToTop />
-      <div>
-        <AppWrapper />
-      </div>
+      <AppWrapper />
     </Router>
   );
 }
-
-export default App;

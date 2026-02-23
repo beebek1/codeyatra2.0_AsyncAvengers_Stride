@@ -181,12 +181,6 @@ const handleStart = async () => {
       console.error("Error creating roadmap:", error.message);
     }
 
-    navigate("/roadmap", {
-      state: {
-        careerId: selCareer.id,
-        careerLabel: selCareer.label,
-      },
-    });
 };
 
 

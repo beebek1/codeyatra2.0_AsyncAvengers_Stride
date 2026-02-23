@@ -6,11 +6,8 @@ import Career from "../careers/career.model.js";
 // CREATE TASKS
 // ==============================
 export const createTask = async (req, res) => {
-  console.log("Received request:", req.body);
-
   const { level_id, taskName, timeline } = req.body;
 
-  // Validate input
   if (
     !level_id ||
     !Array.isArray(taskName) ||
@@ -19,159 +16,111 @@ export const createTask = async (req, res) => {
   ) {
     return res.status(400).json({
       success: false,
-      message: "level_id and taskName (array) are required. If timeline is provided, it must match taskName length.",
+      message: "level_id and taskName (array) are required.",
     });
   }
 
   try {
     const level = await Level.findByPk(level_id);
     if (!level) {
-      return res.status(404).json({
-        success: false,
-        message: "Level not found",
-      });
+      return res.status(404).json({ success: false, message: "Level not found" });
     }
-
-    const defaultStatus = "locked";
 
     const tasksToInsert = taskName.map((name, index) => ({
       level_id,
       taskName: name,
       timeline: timeline ? timeline[index] : 0,
-      status: defaultStatus,
+      status: "incomplete",
     }));
 
     const createdTasks = await Task.bulkCreate(tasksToInsert);
 
-    return res.status(201).json({
-      success: true,
-      message: "Tasks created successfully",
-      tasks: createdTasks,
-    });
+    return res.status(201).json({ success: true, message: "Tasks created successfully", tasks: createdTasks });
   } catch (error) {
-    console.error("CreateTask Error:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Failed to create tasks",
-      error: error.message,
-    });
+    return res.status(500).json({ success: false, message: "Failed to create tasks", error: error.message });
   }
 };
 
 // ==============================
-// GET ALL TASKS (with Level & Career)
+// GET ALL TASKS
 // ==============================
 export const getAllTasks = async (req, res) => {
   try {
     const tasks = await Task.findAll({
-      include: [
-        {
-          model: Level,
-          as: "level",
-          include: [
-            {
-              model: Career,
-              as: "career",
-              attributes: ["id", "title", "industry"],
-            },
-          ],
-        },
-      ],
+      include: [{ model: Level, as: "level", include: [{ model: Career, as: "career", attributes: ["id", "title", "industry"] }] }],
     });
-
-    return res.status(200).json({
-      success: true,
-      tasks,
-    });
+    return res.status(200).json({ success: true, tasks });
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: "Failed to fetch tasks",
-      error: error.message,
-    });
+    return res.status(500).json({ success: false, message: "Failed to fetch tasks", error: error.message });
   }
 };
 
 // ==============================
-// GET TASKS BY LEVEL (with Level & Career)
+// GET TASKS BY LEVEL
 // ==============================
 export const getTasksByLevel = async (req, res) => {
   const { level_id } = req.params;
-
   try {
     const tasks = await Task.findAll({
       where: { level_id },
-      include: [
-        {
-          model: Level,
-          as: "level",
-          include: [
-            {
-              model: Career,
-              as: "career",
-              attributes: ["id", "title", "industry"],
-            },
-          ],
-        },
-      ],
+      include: [{ model: Level, as: "level", include: [{ model: Career, as: "career", attributes: ["id", "title", "industry"] }] }],
     });
-
-    return res.status(200).json({
-      success: true,
-      tasks,
-    });
+    return res.status(200).json({ success: true, tasks });
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: "Failed to fetch tasks",
-      error: error.message,
-    });
+    return res.status(500).json({ success: false, message: "Failed to fetch tasks", error: error.message });
   }
 };
 
 // ==============================
-// UPDATE TASK
+// UPDATE TASK — ✅ now handles both taskName AND status
 // ==============================
 export const updateTask = async (req, res) => {
   const { id } = req.params;
-  const { taskName } = req.body;
+  const { taskName, status } = req.body;
+
+  const allowedStatus = ["completed", "incomplete", "progress"];
 
   try {
-    const task = await Task.findByPk(id, {
-      include: [
-        {
-          model: Level,
-          as: "level",
-          include: [
-            {
-              model: Career,
-              as: "career",
-              attributes: ["id", "title", "industry"],
-            },
-          ],
-        },
-      ],
-    });
-
+    const task = await Task.findByPk(id);
     if (!task) {
-      return res.status(404).json({
-        success: false,
-        message: "Task not found",
-      });
+      return res.status(404).json({ success: false, message: "Task not found" });
     }
 
-    await task.update({ taskName });
+    const updateData = {};
+    if (taskName) updateData.taskName = taskName;
+    if (status && allowedStatus.includes(status)) updateData.status = status;
 
-    return res.status(200).json({
-      success: true,
-      message: "Task updated successfully",
-      task,
-    });
+    await task.update(updateData);
+
+    return res.status(200).json({ success: true, message: "Task updated successfully", task });
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: "Failed to update task",
-      error: error.message,
-    });
+    return res.status(500).json({ success: false, message: "Failed to update task", error: error.message });
+  }
+};
+
+// ==============================
+// UPDATE TASK STATUS (dedicated endpoint — keep for future use)
+// ==============================
+export const updateTaskStatus = async (req, res) => {
+  const { id } = req.params;
+  const { status } = req.body;
+
+  const allowedStatus = ["completed", "incomplete", "progress"];
+
+  if (!status || !allowedStatus.includes(status)) {
+    return res.status(400).json({ success: false, message: "Valid status required: completed, incomplete, progress" });
+  }
+
+  try {
+    const task = await Task.findByPk(id);
+    if (!task) {
+      return res.status(404).json({ success: false, message: "Task not found" });
+    }
+
+    await task.update({ status });
+
+    return res.status(200).json({ success: true, message: "Task status updated successfully", task });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: "Failed to update task status", error: error.message });
   }
 };
