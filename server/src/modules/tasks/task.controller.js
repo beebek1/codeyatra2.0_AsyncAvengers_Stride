@@ -7,13 +7,18 @@ CREATE TASK
 export const createTask = async (req, res) => {
   console.log("Received request:", req.body);
 
-  const { level_id, taskName, timeline = 0 } = req.body;
+  const { level_id, taskName, timeline } = req.body;
 
   // Validate input
-  if (!level_id || !Array.isArray(taskName) || taskName.length === 0) {
+  if (
+    !level_id ||
+    !Array.isArray(taskName) ||
+    taskName.length === 0 ||
+    (timeline && (!Array.isArray(timeline) || timeline.length !== taskName.length))
+  ) {
     return res.status(400).json({
       success: false,
-      message: "level_id and taskName (array) are required",
+      message: "level_id and taskName (array) are required. If timeline is provided, it must match taskName length.",
     });
   }
 
@@ -28,13 +33,13 @@ export const createTask = async (req, res) => {
     }
 
     // Determine task status based on level_name
-    const defaultStatus = level.level_name === "beginner" ? "incomplete" : "locked";
+    const defaultStatus = "locked";
 
     // Prepare tasks array with timeline and status
-    const tasksToInsert = taskName.map((name) => ({
+    const tasksToInsert = taskName.map((name, index) => ({
       level_id,
       taskName: name,
-      timeline,       // timeline in minutes (default 0)
+      timeline: timeline ? timeline[index] : 0, // use provided timeline or default 0
       status: defaultStatus,
     }));
 
@@ -48,6 +53,7 @@ export const createTask = async (req, res) => {
     });
 
   } catch (error) {
+    console.error("CreateTask Error:", error);
     return res.status(500).json({
       success: false,
       message: "Failed to create tasks",

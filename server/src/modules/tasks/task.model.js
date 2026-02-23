@@ -27,9 +27,8 @@ const Task = sequelize.define(
     },
 
     timeline: {
-      type: DataTypes.INTEGER, // minutes
+      type: DataTypes.STRING(200), // weeks
       allowNull: false,
-      defaultValue: 0,  // default 0 minutes if not provided
     },
 
     status: {
