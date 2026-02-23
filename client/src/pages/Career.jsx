@@ -187,10 +187,6 @@ const handleStart = async () => {
         careerLabel: selCareer.label,
       },
     });
-
-  } catch (error) {
-    console.error("Error generating roadmap:", error.message);
-  }
 };
 
 

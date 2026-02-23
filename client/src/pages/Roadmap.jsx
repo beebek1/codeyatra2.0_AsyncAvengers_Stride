@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Lock, CheckCircle, Play } from 'lucide-react';
-import Kanban from '../components/Kanban';
+import { Lock, CheckCircle, Play, Star, Zap, TrendingUp } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 import { getLevelsByCareerId } from '../services/api';
 import toast from 'react-hot-toast';
@@ -162,28 +161,6 @@ export default function RoadmapPage() {
           })}
         </main>
       </div>
-
-      <AnimatePresence initial={false}>
-        {panelOpen && (
-          <motion.div
-            key="kanban-panel"
-            initial={{ width: 0 }}
-            animate={{ width: PANEL_WIDTH }}
-            exit={{ width: 0 }}
-            transition={{ type: 'spring', stiffness: 280, damping: 32 }}
-            className="flex-shrink-0 h-screen sticky top-0 overflow-hidden border-l border-gray-100 shadow-2xl bg-white z-30"
-            style={{ minWidth: 0 }}
-          >
-            <div style={{ width: PANEL_WIDTH }} className="h-full">
-              <Kanban
-                levelId={activePanel}
-                onClose={closePanel}
-                onLevelComplete={handleLevelComplete}
-              />
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }
@@ -224,93 +201,102 @@ const SnakeCurve = ({ direction, isUnlocked }) => {
   );
 };
 
-function RoadmapCard({ level, isUnlocked, currentProgress, isCompleted, isFirst, isActive, onClick }) {
+function RoadmapCard({ level, isUnlocked, isCompleted, isFirst, isActive, onClick }) {
+  // Mock data - replace with level.topics or level.difficulty
+  const tags = level.tags || ["Core Theory", "Hands-on", "AI Review"];
+  const marketDemand = level.demand || "High";
+
   return (
-    <div className={`w-full max-w-sm relative ${isFirst ? 'pt-0' : 'pt-8'}`}>
+    <div className={`w-full max-w-sm relative ${isFirst ? 'pt-0' : 'pt-10'}`}>
+      {/* Connector Node */}
       {!isFirst && (
         <div className="absolute -top-7 left-1/2 -translate-x-1/2 z-20">
-          <div
-            className={`w-14 h-14 rounded-full border-[5px] flex items-center justify-center bg-white transition-all duration-500
-              ${isCompleted
-                ? 'border-black shadow-lg'
-                : isUnlocked
-                  ? 'border-[#f5c842] shadow-[0_0_25px_rgba(245,200,66,0.4)]'
-                  : 'border-gray-300 shadow-sm'
-              }`}
+          <div className={`w-14 h-14 rounded-full border-[5px] flex items-center justify-center bg-white transition-all duration-500
+            ${isCompleted ? 'border-[#111827] shadow-lg' : isUnlocked ? 'border-[#F5C842] shadow-[0_0_20px_rgba(245,200,66,0.3)]' : 'border-gray-100 shadow-sm'}`}
           >
             {isCompleted ? (
-              <CheckCircle size={22} strokeWidth={3} className="text-black" />
+              <CheckCircle size={22} strokeWidth={3} className="text-[#111827]" />
             ) : isUnlocked ? (
-              <div className="w-4 h-4 rounded-full bg-[#f5c842] animate-pulse" />
+              <div className="w-3 h-3 rounded-full bg-[#F5C842] animate-pulse" />
             ) : (
-              <Lock size={18} strokeWidth={2.5} className="text-gray-400" />
+              <Lock size={18} strokeWidth={2.5} className="text-gray-300" />
             )}
           </div>
         </div>
       )}
 
+      {/* Main Card */}
       <div
-        onClick={onClick}
-        className={`w-full rounded-[2.5rem] p-8 transition-all duration-500 relative group z-10
-          ${!isFirst ? 'pt-12' : ''}
-          ${isActive
-            ? 'bg-white border-2 border-black shadow-2xl scale-[1.02] cursor-pointer'
+        onClick={isUnlocked ? onClick : undefined}
+        className={`w-full rounded-[2rem] p-7 transition-all duration-500 relative group z-10 border-2
+          ${isActive 
+            ? 'bg-white border-[#111827] shadow-[12px_12px_0px_0px_rgba(17,24,39,1)] scale-[1.02] cursor-pointer' 
             : isCompleted
-              ? 'bg-white border-2 border-black cursor-pointer shadow-sm hover:-translate-y-2 hover:shadow-2xl'
+              ? 'bg-white border-gray-200 shadow-sm hover:shadow-[8px_8px_0px_0px_rgba(17,24,39,0.1)] hover:-translate-y-1 cursor-pointer'
               : isUnlocked
-                ? 'bg-white border-2 border-[#f5c842] cursor-pointer shadow-sm hover:-translate-y-2 hover:shadow-2xl'
-                : 'bg-gray-50 border-2 border-gray-300 cursor-not-allowed opacity-70'
+                ? 'bg-white border-[#F5C842] shadow-sm hover:shadow-[8px_8px_0px_0px_rgba(245,200,66,0.2)] hover:-translate-y-1 cursor-pointer'
+                : 'bg-[#F9FAFB] border-dashed border-gray-200 opacity-60 cursor-not-allowed'
           }`}
       >
-        <div className="flex items-start justify-between mb-8">
-          <h3
-            className={`text-2xl font-black tracking-tighter uppercase leading-none ${
-              !isUnlocked ? 'text-gray-400' : 'text-gray-900'
-            }`}
-          >
-            {level.level_name}
-          </h3>
-          <div
-            className={`px-4 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-full
-              ${!isUnlocked
-                ? 'bg-gray-200 text-gray-400'
-                : isCompleted
-                  ? 'bg-black text-[#f5c842]'
-                  : 'bg-[#f5c842] text-black'
-              }`}
-          >
-            {isCompleted ? 'Done' : isUnlocked ? 'Open' : 'Locked'}
-          </div>
-        </div>
-
-        <div>
-          <div className="flex justify-between text-[10px] font-black tracking-widest uppercase mb-3">
-            <span className="text-gray-400">Completion</span>
-            <span className={!isUnlocked ? 'text-gray-400' : 'text-black'}>
-              {currentProgress}%
+        {/* Header: Level & Demand */}
+        <div className="flex justify-between items-start mb-6">
+          <div>
+            <span className={`text-[10px] font-black uppercase tracking-[0.2em] ${isUnlocked ? 'text-[#F5C842]' : 'text-gray-400'}`}>
+              Module {level.id || '01'}
             </span>
+            <h3 className={`text-2xl font-extrabold tracking-tight leading-none mt-1 ${!isUnlocked ? 'text-gray-400' : 'text-[#111827]'}`}>
+              {level.level_name}
+            </h3>
           </div>
-          <div
-            className={`w-full h-3 rounded-full overflow-hidden ${
-              !isUnlocked ? 'bg-gray-200' : 'bg-gray-100'
-            }`}
-          >
-            <div
-              className={`h-full rounded-full transition-all duration-1000 ${
-                !isUnlocked ? 'bg-gray-300' : 'bg-[#f5c842]'
-              }`}
-              style={{ width: `${currentProgress}%` }}
-            />
-          </div>
+          
+          {isUnlocked && (
+            <div className="flex flex-col items-end">
+              <div className="flex items-center gap-1 text-[10px] font-black text-green-600 uppercase">
+                <TrendingUp size={12} />
+                {marketDemand}
+              </div>
+              <div className="text-[9px] text-gray-400 font-bold uppercase tracking-tighter">Demand</div>
+            </div>
+          )}
         </div>
 
-        {isUnlocked && !isActive && (
-          <div className="absolute right-6 bottom-6 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-x-4 group-hover:translate-x-0">
-            <div className="w-12 h-12 rounded-full bg-black flex items-center justify-center text-[#f5c842] shadow-xl">
-              <Play size={18} fill="currentColor" className="ml-1" />
-            </div>
+        {/* Tags Section (Replaces Progress Bar) */}
+        <div className="space-y-3">
+          <div className="flex flex-wrap gap-2">
+            {tags.map((tag, i) => (
+              <span 
+                key={i}
+                className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-tight border transition-all
+                  ${!isUnlocked 
+                    ? 'border-gray-100 text-gray-300' 
+                    : 'border-gray-100 bg-gray-50 text-gray-500 group-hover:border-[#111827] group-hover:text-[#111827]'
+                  }`}
+              >
+                {tag}
+              </span>
+            ))}
           </div>
-        )}
+          <p className={`text-xs leading-relaxed ${isUnlocked ? 'text-gray-500' : 'text-gray-300'}`}>
+            {isUnlocked 
+              ? "Master the industry standards required for top-tier roles." 
+              : "Complete previous modules to unlock this syllabus."}
+          </p>
+        </div>
+
+        {/* Footer: Dynamic Status */}
+        <div className="mt-8 pt-6 border-t border-gray-50 flex items-center justify-between">
+          <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest
+            ${isCompleted ? 'bg-[#111827] text-white' : isUnlocked ? 'bg-[#F5C842]/10 text-[#C8980A]' : 'bg-gray-100 text-gray-400'}`}>
+            {isCompleted ? 'Module Cleared' : isUnlocked ? 'Ready to Forge' : 'Locked'}
+          </div>
+
+          {isUnlocked && (
+            <div className="flex items-center gap-1.5 text-[#111827] font-black text-xs uppercase group-hover:translate-x-1 transition-transform">
+              <span>{isCompleted ? 'Review' : 'Start'}</span>
+              <Play size={14} fill="currentColor" />
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
