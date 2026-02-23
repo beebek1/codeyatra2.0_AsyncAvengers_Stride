@@ -79,6 +79,7 @@ export default function CareersPage() {
             difficulty: c.difficulty, // BUG FIX 2: card uses career.difficulty directly
             icon: INDUSTRY_ICONS[c.industry] || Box,
             desc: c.description,
+            sponsorship_link : c.sponsorship_link, // BUG FIX 2: CareerCard uses career.sponsorship_link but it wasn't included in the mapping
             avgSalary: c.avg_salary ? `$${c.avg_salary.toLocaleString()}` : "N/A", // BUG FIX 2: floating bar uses selCareer.avgSalary
             growthRate: c.growth_rate ? c.growth_rate.replace(/[^0-9]/g, '') : "0", // BUG FIX 2: floating bar uses selCareer.growthRate — strip to number only
           }));
@@ -560,13 +561,33 @@ function CareerCard({ career, selected, onSelect, animDelay, faded }) {
             </span>
           </div>
 
-          {/* Start Button */}
-          <div className={`
-            flex items-center gap-1 transition-all duration-300
-            ${selected ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-4'}
-          `}>
-            <span className="text-[11px] font-bold text-[#F5C842]">Explore</span>
-            <ArrowRight size={14} className="text-[#F5C842]" strokeWidth={3} />
+          <div className="flex items-center gap-3">
+            {/* Sponsorship link */}
+            {career.sponsorship_link && (
+              <a
+                href={career.sponsorship_link}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={e => e.stopPropagation()}
+                className={`flex items-center gap-1 text-[10px] font-bold text-blue-500 hover:text-blue-600 transition-colors
+                                ${selected ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-4'}
+                `}
+              >
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
+                </svg>
+                Learn
+              </a>
+            )}
+
+            {/* Explore */}
+            <div className={`
+              flex items-center gap-1 transition-all duration-300
+              ${selected ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-4'}
+            `}>
+              <span className="text-[11px] font-bold text-[#F5C842]">Explore</span>
+              <ArrowRight size={14} className="text-[#F5C842]" strokeWidth={3} />
+            </div>
           </div>
         </div>
       </div>

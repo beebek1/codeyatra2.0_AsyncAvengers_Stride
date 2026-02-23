@@ -38,11 +38,10 @@ export const getCareerById = async (req, res) => {
   }
 };
 
-// 3. Admin: Add a new career (Useful for your seed script or Postman)
+// 3. Admin: Add a new career
 export const createCareer = async (req, res) => {
   try {
-    const { title, description, industry, avg_salary, difficulty, tags } =
-      req.body;
+    const { title, description, industry, avg_salary, difficulty, tags, sponsorship_link } = req.body;
 
     const newCareer = await Career.create({
       title,
@@ -51,6 +50,7 @@ export const createCareer = async (req, res) => {
       avg_salary,
       difficulty,
       tags,
+      sponsorship_link, // Include the new field
     });
 
     return res.status(201).json({ success: true, data: newCareer });
