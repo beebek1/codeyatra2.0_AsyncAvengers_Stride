@@ -38,7 +38,9 @@ export const createLevel = (data) => Api.post("/api/level/createlevels", data, c
 export const getLevelsByCareerId = (careerId) => Api.get(`/api/level/career/${careerId}`);
 
 export const createTask = (data) => Api.post("/api/task/createTask", data, config);
+export const getAllTasks = () => Api.get("/api/task/getAllTasks", config);
 export const getTasksByLevelId = (levelId) => Api.get(`/api/task/getTask/${levelId}`);
+export const getProgressTasks = () => Api.get("/api/task/getProgressTasks");
 
 // ✅ FIXED: uses /updateTask/:id route (already working) instead of /:id/status
 export const updateTaskStatus = (taskId, frontendStatus) => {

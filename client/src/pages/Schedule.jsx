@@ -1,31 +1,32 @@
 import React, { useState, useEffect } from "react";
+import { getAllTasks, getProgressTasks } from "../services/api";
 
 const FONT_IMPORT = `@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700;900&display=swap');
 * { font-family: 'DM Sans', sans-serif !important; }`;
 
-const MOCK_TASKS = [
-  {
-    task_id: "1",
-    name: "Portfolio Wireframing",
-    createdAt: "2026-02-05",
-    timeline: "2026-02-12",
-    status: "in-progress"
-  },
-  {
-    task_id: "2",
-    name: "Backend API Integration",
-    createdAt: "2026-02-15",
-    timeline: "2026-02-25",
-    status: "todo"
-  },
-  {
-    task_id: "3",
-    name: "Testing Phase",
-    createdAt: "2026-02-24",
-    timeline: "2026-02-28",
-    status: "todo"
-  }
-];
+// const MOCK_TASKS = [
+//   {
+//     task_id: "1",
+//     name: "Portfolio Wireframing",
+//     createdAt: "2026-02-05",
+//     timeline: "2026-02-12",
+//     status: "in-progress"
+//   },
+//   {
+//     task_id: "2",
+//     name: "Backend API Integration",
+//     createdAt: "2026-02-15",
+//     timeline: "2026-02-25",
+//     status: "todo"
+//   },
+//   {
+//     task_id: "3",
+//     name: "Testing Phase",
+//     createdAt: "2026-02-24",
+//     timeline: "2026-02-28",
+//     status: "todo"
+//   }
+// ];
 
 // Per-task color sets: bg highlight, dot, border, text
 const TASK_COLORS = [
@@ -122,16 +123,60 @@ export default function Schedule({ kanbanEvents = [] }) {
   const [currentDate, setCurrentDate] = useState(new Date(2026, 1, 1)); // Feb 2026 to match mock data
   const [selectedDay, setSelectedDay] = useState(today.getDate());
   const [mounted,     setMounted]     = useState(false);
+  const [MOCK_TASKS, setMockTasks] = useState([]);
+  const [backendTasks, setBackendTasks] = useState([]);
   const [daysToLastDeadline, setDaysToLastDeadline] = useState(0);
-
-  // Parsed MOCK_TASKS take priority; fall back to kanbanEvents if provided
-  const parsedTasks = parseTasks(MOCK_TASKS);
-  const events = parsedTasks.length > 0 ? parsedTasks : kanbanEvents;
 
   useEffect(() => {
     const t = setTimeout(() => setMounted(true), 100);
     return () => clearTimeout(t);
   }, []);
+
+useEffect(() => {
+  const fetchTasks = async () => {
+    try {
+      const response = await getProgressTasks();
+      console.log("Fetched tasks:", response.data);
+
+      if (response.data.success) {
+        const fetchedTasks = response.data.tasks;
+        setBackendTasks(fetchedTasks); // optional if you still want backendTasks state
+
+        const statusMap = {
+          incomplete: "todo",
+          progress: "in-progress",
+          completed: "completed",
+        };
+
+        const MOCK_TASKS = fetchedTasks.map((task) => {
+          const startDate = new Date(task.createdAt);
+          const endDate = new Date(startDate);
+          endDate.setDate(startDate.getDate() + Number(task.timeline) * 7);
+
+          return {
+            task_id: task.id,
+            name: task.taskName,
+            createdAt: startDate.toISOString().split("T")[0],
+            timeline: endDate.toISOString().split("T")[0],
+            status: statusMap[task.status] || "todo",
+          };
+        });
+
+        setMockTasks(MOCK_TASKS); // ✅ set your state here
+      } else {
+        console.error("Failed to fetch tasks:", response.data.message);
+      }
+    } catch (error) {
+      console.error("Error fetching tasks:", error);
+    }
+  };
+
+  fetchTasks();
+}, []);
+
+    // Parsed MOCK_TASKS take priority; fall back to kanbanEvents if provided
+  const parsedTasks = parseTasks(MOCK_TASKS);
+  const events = parsedTasks.length > 0 ? parsedTasks : kanbanEvents;
 
   const [, setTick] = useState(0);
   useEffect(() => {
