@@ -1,14 +1,101 @@
 import React, { useState, useEffect } from "react";
 
-const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const FONT_IMPORT = `@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700;900&display=swap');
+* { font-family: 'DM Sans', sans-serif !important; }`;
+
+const MOCK_TASKS = [
+  {
+    task_id: "1",
+    name: "Portfolio Wireframing",
+    createdAt: "2026-02-05",
+    timeline: "2026-02-12",
+    status: "in-progress"
+  },
+  {
+    task_id: "2",
+    name: "Backend API Integration",
+    createdAt: "2026-02-15",
+    timeline: "2026-02-25",
+    status: "todo"
+  },
+  {
+    task_id: "3",
+    name: "Testing Phase",
+    createdAt: "2026-02-24",
+    timeline: "2026-02-28",
+    status: "todo"
+  }
+];
+
+// Per-task color sets: bg highlight, dot, border, text
+const TASK_COLORS = [
+  { bg: "#F5C84220", dot: "#F5C842", border: "#F5C84260", label: "#C8980A" },
+  { bg: "#60A5FA20", dot: "#60A5FA", border: "#60A5FA60", label: "#2563EB" },
+  { bg: "#34D39920", dot: "#34D399", border: "#34D39960", label: "#059669" },
+  { bg: "#F472B620", dot: "#F472B6", border: "#F472B660", label: "#DB2777" },
+  { bg: "#A78BFA20", dot: "#A78BFA", border: "#A78BFA60", label: "#7C3AED" },
+];
+
+const DAYS   = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 
 const MILESTONES = [
-  { threshold: 25,  label: "Getting Started",          reward: "Keep building momentum!",              icon: "🌱" },
-  { threshold: 50,  label: "Portfolio Tips Unlocked",  reward: "Time to build your portfolio!",        icon: "💼" },
-  { threshold: 75,  label: "Mock Interview Checklist", reward: "You're interview-ready!",              icon: "🎯" },
-  { threshold: 100, label: "Certificate Suggestions",  reward: "Explore certifications to stand out!", icon: "🏆" },
+  { threshold: 1, label: "Deadline Soon",           reward: "1 task due this week. Stay on track.",     icon: "🌱" },
+  { threshold: 2, label: "Two Deadlines This Week",  reward: "2 tasks due soon. Prioritize now.",        icon: "⚡" },
+  { threshold: 3, label: "Critical Week",            reward: "All tasks due this week. Clear your schedule.", icon: "🔥" },
 ];
+
+// Parse MOCK_TASKS into calendar-compatible event objects
+// Each task spans from createdAt to timeline, possibly across months
+function parseTasks(tasks) {
+  const events = [];
+  tasks.forEach((task, index) => {
+    const start = new Date(task.createdAt);
+    const end   = new Date(task.timeline);
+    const color = TASK_COLORS[index % TASK_COLORS.length];
+
+    // Walk month by month so multi-month tasks get a segment per month
+    const cursor = new Date(start.getFullYear(), start.getMonth(), 1);
+    const endMonth = new Date(end.getFullYear(), end.getMonth(), 1);
+
+    while (cursor <= endMonth) {
+      const y = cursor.getFullYear();
+      const m = cursor.getMonth();
+      const daysInMonth = new Date(y, m + 1, 0).getDate();
+
+      const segStart = (y === start.getFullYear() && m === start.getMonth())
+        ? start.getDate()
+        : 1;
+      const segEnd = (y === end.getFullYear() && m === end.getMonth())
+        ? end.getDate()
+        : daysInMonth;
+
+      events.push({
+        id:       `${task.task_id}-${y}-${m}`,
+        task_id:  task.task_id,
+        title:    task.name,
+        status:   task.status,
+        startDay: segStart,
+        endDay:   segEnd,
+        month:    m,
+        year:     y,
+        color,
+        completed: task.status === "done",
+        fullStart: task.createdAt,
+        fullEnd:   task.timeline,
+      });
+
+      cursor.setMonth(cursor.getMonth() + 1);
+    }
+  });
+  return events;
+}
+
+const STATUS_LABEL = {
+  "in-progress": "IN PROGRESS",
+  "todo":        "TODO",
+  "done":        "DONE",
+};
 
 const getDaysRemaining = (event) => {
   const todayMidnight = new Date();
@@ -21,79 +108,46 @@ const getDaysRemaining = (event) => {
   return `${diff} days left`;
 };
 
-const getTimeRemaining = (eventTime) => {
-  try {
-    const [timePart, period] = eventTime.split(" ");
-    if (!timePart || !period) return null;
-    let [hours, minutes] = timePart.split(":").map(Number);
-    if (isNaN(hours) || isNaN(minutes)) return null;
-    if (period === "PM" && hours !== 12) hours += 12;
-    if (period === "AM" && hours === 12) hours = 0;
-    const target = new Date();
-    target.setHours(hours, minutes, 0, 0);
-    const diff = target - new Date();
-    if (diff <= 0) return "passed";
-    const h = Math.floor(diff / (1000 * 60 * 60));
-    const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-    return h > 0 ? `${h}h ${m}m left` : `${m}m left`;
-  } catch {
-    return null;
-  }
-};
-
 const getRemainingLabel = (event) => {
   const days = getDaysRemaining(event);
-  if (days === "past")     return { label: "Past",        color: "text-[#ccc]" };
-  if (days === "tomorrow") return { label: "Tomorrow",    color: "text-[#C8980A]" };
-  if (days === "today") {
-    const t = getTimeRemaining(event.time);
-    if (!t || t === "passed") return { label: "Time passed", color: "text-[#ccc]" };
-    return { label: `⏱ ${t}`, color: "text-[#F5C842]" };
-  }
+  if (days === "past")     return { label: "Past",     color: "text-[#ccc]" };
+  if (days === "tomorrow") return { label: "Tomorrow", color: "text-[#C8980A]" };
+  if (days === "today")    return { label: "Today",    color: "text-[#F5C842]" };
   return { label: `⏱ ${days}`, color: "text-[#C8980A]" };
 };
 
 export default function Schedule({ kanbanEvents = [] }) {
   const today = new Date();
 
-  const [currentDate, setCurrentDate] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
+  const [currentDate, setCurrentDate] = useState(new Date(2026, 1, 1)); // Feb 2026 to match mock data
   const [selectedDay, setSelectedDay] = useState(today.getDate());
   const [mounted,     setMounted]     = useState(false);
-  const [streak,      setStreak]      = useState(0);
+  const [daysToLastDeadline, setDaysToLastDeadline] = useState(0);
 
-  // Directly sourcing from Kanban prop
-  const events = kanbanEvents;
+  // Parsed MOCK_TASKS take priority; fall back to kanbanEvents if provided
+  const parsedTasks = parseTasks(MOCK_TASKS);
+  const events = parsedTasks.length > 0 ? parsedTasks : kanbanEvents;
 
   useEffect(() => {
     const t = setTimeout(() => setMounted(true), 100);
     return () => clearTimeout(t);
   }, []);
 
-  // Re-render every minute so countdown stays live
   const [, setTick] = useState(0);
   useEffect(() => {
     const interval = setInterval(() => setTick(t => t + 1), 60000);
     return () => clearInterval(interval);
   }, []);
 
-  // Streak calculation based on Kanban completed events
   useEffect(() => {
-    let count = 0;
-    const checkDate = new Date(today);
-    checkDate.setHours(0, 0, 0, 0);
-    while (true) {
-      const d = checkDate.getDate();
-      const m = checkDate.getMonth();
-      const y = checkDate.getFullYear();
-      const hasCompleted = events.some(
-        (e) => e.completed && e.month === m && e.year === y && e.startDay <= d && e.endDay >= d
-      );
-      if (!hasCompleted) break;
-      count++;
-      checkDate.setDate(checkDate.getDate() - 1);
-    }
-    setStreak(count);
-  }, [events, today]);
+    const todayMs = new Date(); todayMs.setHours(0, 0, 0, 0);
+    const lastDeadline = MOCK_TASKS.reduce((latest, t) => {
+      const d = new Date(t.timeline); d.setHours(0, 0, 0, 0);
+      return d > latest ? d : latest;
+    }, todayMs);
+    const diff = Math.ceil((lastDeadline - todayMs) / (1000 * 60 * 60 * 24));
+    setDaysToLastDeadline(diff > 0 ? diff : 0);
+  }, []);
 
   const year        = currentDate.getFullYear();
   const month       = currentDate.getMonth();
@@ -111,19 +165,26 @@ export default function Schedule({ kanbanEvents = [] }) {
 
   const selectedEvents = getEventsForDay(selectedDay);
 
-  // Kanban Progress Calculations
-  const totalEvents     = events.length;
-  const completedEvents = events.filter((e) => e.completed).length;
+  const totalEvents      = MOCK_TASKS.length;
+  const todayMidnight   = new Date(); todayMidnight.setHours(0, 0, 0, 0);
+  const in7Days         = new Date(todayMidnight); in7Days.setDate(in7Days.getDate() + 7);
+  const completedEvents = MOCK_TASKS.filter((t) => new Date(t.timeline) < todayMidnight).length;
+  const dueSoonCount    = MOCK_TASKS.filter((t) => {
+    const d = new Date(t.timeline); d.setHours(0, 0, 0, 0);
+    return d >= todayMidnight && d <= in7Days;
+  }).length;
   const progress        = totalEvents > 0 ? Math.round((completedEvents / totalEvents) * 100) : 0;
-  
-  const unlockedMilestone = [...MILESTONES].reverse().find((m) => progress >= m.threshold);
+
+  // Badges unlock based on how many tasks are due within 7 days
+  const unlockedMilestone = [...MILESTONES].reverse().find((m) => dueSoonCount >= m.threshold);
 
   const cells = [];
   for (let i = 0; i < firstDay; i++) cells.push(null);
   for (let d = 1; d <= daysInMonth; d++) cells.push(d);
 
   return (
-    <div className="min-h-screen bg-[#F8F8F8] px-10 py-16 flex flex-col items-center font-sans">
+    <div className="min-h-screen bg-[#F8F8F8] px-10 py-16 flex flex-col items-center">
+      <style>{FONT_IMPORT}</style>
 
       {/* Header */}
       <div className={`text-center mb-10 transition-all duration-700 ease-out transform ${mounted ? "translate-y-0 opacity-100" : "translate-y-10 opacity-0"}`}>
@@ -140,11 +201,10 @@ export default function Schedule({ kanbanEvents = [] }) {
       {/* Main Container */}
       <div className={`w-full flex flex-col lg:flex-row gap-8 transition-all duration-1000 delay-100 ease-out transform ${mounted ? "translate-y-0 opacity-100" : "translate-y-10 opacity-0"}`} style={{ maxWidth: "1400px" }}>
 
-        {/* ── Calendar (Left Pane) ── */}
+        {/* Calendar */}
         <div className="flex-1 bg-white rounded-3xl border border-[#EBEBEB] p-12 shadow-sm">
 
           <div className="flex items-center justify-between mb-10">
-            {/* ADDED cursor-pointer here */}
             <button onClick={prevMonth}
               className="w-12 h-12 flex items-center justify-center rounded-full cursor-pointer hover:bg-[#F5F5F5] transition-colors text-[#999] hover:text-[#0E0E0E] text-3xl">
               ‹
@@ -152,7 +212,6 @@ export default function Schedule({ kanbanEvents = [] }) {
             <span className="text-[24px] font-black text-[#0E0E0E] tracking-tight">
               {MONTHS[month]} {year}
             </span>
-            {/* ADDED cursor-pointer here */}
             <button onClick={nextMonth}
               className="w-12 h-12 flex items-center justify-center rounded-full cursor-pointer hover:bg-[#F5F5F5] transition-colors text-[#999] hover:text-[#0E0E0E] text-3xl">
               ›
@@ -171,65 +230,63 @@ export default function Schedule({ kanbanEvents = [] }) {
             {cells.map((day, i) => {
               const dayEvents = day ? getEventsForDay(day) : [];
               const hasEvent  = dayEvents.length > 0;
-              const allDone   = hasEvent && dayEvents.every((e) => e.completed);
-              
               const selected  = day === selectedDay;
               const todayCell = day !== null && isToday(day);
-              
-              let cellClasses = "relative aspect-square flex flex-col items-center justify-center rounded-2xl text-[17px] font-semibold transition-all cursor-pointer ";
-              
+
+              // Use the first task's color for cell background when highlighted
+              const firstColor = hasEvent ? dayEvents[0].color : null;
+
+              let cellStyle = {};
+              let cellClasses = "relative aspect-square flex flex-col items-center justify-center rounded-xl border text-[17px] font-semibold transition-all cursor-pointer ";
+
               if (!day) {
-                cellClasses += "pointer-events-none";
+                cellClasses += "pointer-events-none border-transparent";
               } else if (selected && todayCell) {
-                cellClasses += "bg-[#0E0E0E] text-[#F5C842]"; // Selected Today
+                cellClasses += "bg-[#0E0E0E] text-[#F5C842] border-[#0E0E0E]";
               } else if (selected) {
-                cellClasses += "bg-[#0E0E0E] text-white"; // Selected Normal
+                cellClasses += "bg-[#0E0E0E] text-white border-[#0E0E0E]";
               } else if (todayCell) {
-                cellClasses += "bg-[#F5C842] text-[#0E0E0E] hover:bg-[#E5B832] shadow-sm"; // Today (Unselected)
+                cellClasses += "bg-[#F5C842] text-[#0E0E0E] hover:bg-[#E5B832] shadow-sm border-[#F5C842]";
+              } else if (hasEvent) {
+                // Highlighted range cell: colored background from task color
+                cellClasses += "text-[#0E0E0E] hover:opacity-80";
+                cellStyle = {
+                  backgroundColor: firstColor.bg,
+                  borderColor: firstColor.border,
+                };
               } else {
-                cellClasses += "text-[#0E0E0E] hover:bg-[#F5F5F5]"; // Normal Day
+                cellClasses += "text-[#0E0E0E] hover:bg-[#F5F5F5] border-[#EDEDED]";
               }
-              
+
               return (
-                <div key={i}
+                <div
+                  key={i}
                   onClick={() => day && setSelectedDay(day)}
                   className={cellClasses}
+                  style={cellStyle}
                 >
-                  {day}
-                  
-                  {/* Event indicator dot */}
+                  <span className="text-[20px] font-bold leading-none">{day}</span>
+
+                  {/* Stacked color dots — one per task active on this day */}
                   {hasEvent && (
-                    <span className={`absolute bottom-2 w-1.5 h-1.5 rounded-full ${
-                      allDone ? "bg-green-400" : (selected && todayCell ? "bg-white" : selected ? "bg-[#F5C842]" : (todayCell ? "bg-black" : "bg-[#F5C842]"))
-                    }`} />
+                    <div className="absolute bottom-2 flex gap-1">
+                      {dayEvents.map((e) => (
+                        <span
+                          key={e.id}
+                          className="w-1.5 h-1.5 rounded-full"
+                          style={{ backgroundColor: selected || todayCell ? "#fff" : e.color.dot }}
+                        />
+                      ))}
+                    </div>
                   )}
                 </div>
               );
             })}
           </div>
 
-          {/* Legend */}
-          <div className="flex flex-wrap items-center justify-center gap-6 mt-10 pt-6 border-t border-[#F2F2F2]">
-            <div className="flex items-center gap-2">
-              <div className="w-2.5 h-2.5 rounded-full bg-[#F5C842]" />
-              <span className="text-[12px] text-[#bbb] font-medium">Has event</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-2.5 h-2.5 rounded-full bg-green-400" />
-              <span className="text-[12px] text-[#bbb] font-medium">All done</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded-md bg-[#F5C842]" />
-              <span className="text-[12px] text-[#bbb] font-medium">Today</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded-md bg-[#0E0E0E]" />
-              <span className="text-[12px] text-[#bbb] font-medium">Selected</span>
-            </div>
-          </div>
         </div>
 
-        {/* ── Events & Progress Panel (Right Pane) ── */}
+        {/* Right Pane */}
         <div className="w-full lg:w-[420px] flex flex-col gap-5">
 
           {/* Selected Date Header */}
@@ -242,59 +299,48 @@ export default function Schedule({ kanbanEvents = [] }) {
             </p>
           </div>
 
-          {/* Kanban Progress Tracker */}
+          {/* Progress Tracker */}
           <div className="bg-white rounded-3xl border border-[#EBEBEB] p-7 shadow-sm">
-            
             <div className="flex items-center justify-between mb-3">
-              <p className="text-[12px] font-black tracking-widest uppercase text-[#bbb]">Kanban Progress</p>
+              <p className="text-[12px] font-black tracking-widest uppercase text-[#bbb]">Deadlines Passed</p>
               <span className="text-[18px] font-black text-[#0E0E0E]">{progress}%</span>
             </div>
-            
             <div className="w-full h-2.5 bg-[#F5F5F5] rounded-full overflow-hidden mb-4">
               <div
-                className="h-full bg-[#F5C842] rounded-full transition-all duration-1000 ease-out relative"
+                className="h-full bg-[#F5C842] rounded-full transition-all duration-1000 ease-out"
                 style={{ width: `${progress}%` }}
-              >
-                {progress > 0 && <div className="absolute top-0 left-0 w-full h-full bg-white/20 animate-pulse" />}
-              </div>
+              />
             </div>
 
-            {/* Empty State warning for Kanban */}
-            {totalEvents === 0 && (
-              <p className="text-[11px] text-[#C8980A] bg-[#FEFBF0] p-2 rounded-lg border border-[#F5E199] text-center mb-4">
-                No tasks found. Add tasks to your Kanban board to see progress!
-              </p>
-            )}
-
-            {/* Quick Stats */}
             <div className="grid grid-cols-2 gap-4">
               <div className="bg-[#FAFAFA] border border-[#F2F2F2] rounded-2xl p-4 text-center">
-                <p className="text-2xl font-black text-[#0E0E0E]">{streak}</p>
-                <p className="text-[9px] font-bold tracking-widest uppercase text-[#bbb] mt-1">Day Streak 🔥</p>
+                <p className="text-2xl font-black text-[#0E0E0E]">{daysToLastDeadline}</p>
+                <p className="text-[9px] font-bold tracking-widest uppercase text-[#bbb] mt-1">Days to Last Deadline 📅</p>
               </div>
               <div className="bg-[#FAFAFA] border border-[#F2F2F2] rounded-2xl p-4 text-center">
-                <p className="text-2xl font-black text-[#0E0E0E]">{completedEvents}<span className="text-lg text-[#ccc]">/{totalEvents}</span></p>
-                <p className="text-[9px] font-bold tracking-widest uppercase text-[#bbb] mt-1">Tasks Done</p>
+                <p className="text-2xl font-black text-[#0E0E0E]">
+                  {completedEvents}<span className="text-lg text-[#ccc]">/{totalEvents}</span>
+                </p>
+                <p className="text-[9px] font-bold tracking-widest uppercase text-[#bbb] mt-1">Past Deadline</p>
               </div>
             </div>
 
-            {/* Current Milestone Alert */}
             {unlockedMilestone && (
-              <div className="mt-4 bg-[#FEFBF0] border border-[#F5E199] rounded-2xl p-4 flex items-center gap-4">
+              <div className="mt-4 bg-[#FFF5F5] border border-[#FECACA] rounded-2xl p-4 flex items-center gap-4">
                 <div className="text-3xl bg-white w-12 h-12 rounded-full flex items-center justify-center shadow-sm">
                   {unlockedMilestone.icon}
                 </div>
                 <div>
-                  <p className="text-[12px] font-black text-[#C8980A] uppercase tracking-wide">{unlockedMilestone.label}</p>
-                  <p className="text-[11px] text-[#C8980A]/70 mt-0.5">{unlockedMilestone.reward}</p>
+                  <p className="text-[12px] font-black text-[#DC2626] uppercase tracking-wide">{unlockedMilestone.label}</p>
+                  <p className="text-[11px] text-[#DC2626]/70 mt-0.5">{unlockedMilestone.reward}</p>
                 </div>
               </div>
             )}
           </div>
 
-          {/* Events List for Selected Day */}
+          {/* Events for Selected Day */}
           <div className="flex-1 bg-white rounded-3xl border border-[#EBEBEB] p-7 shadow-sm flex flex-col">
-            <p className="text-[12px] font-black tracking-widest uppercase text-[#bbb] mb-6">Daily Events</p>
+            <p className="text-[12px] font-black tracking-widest uppercase text-[#bbb] mb-6">Active Tasks</p>
 
             {selectedEvents.length === 0 ? (
               <div className="flex-1 flex flex-col items-center justify-center py-8 text-center">
@@ -304,43 +350,36 @@ export default function Schedule({ kanbanEvents = [] }) {
                     <path d="M8 2v4M16 2v4M3 10h18" stroke="#ccc" strokeWidth="2" strokeLinecap="round" />
                   </svg>
                 </div>
-                <p className="text-[14px] text-[#ccc] font-medium">No events this day</p>
-                <p className="text-[12px] text-[#ddd] mt-1">Add tasks from your Kanban board</p>
+                <p className="text-[14px] text-[#ccc] font-medium">No tasks this day</p>
               </div>
             ) : (
-              <div className="flex flex-col gap-4 overflow-y-auto pr-2" style={{ maxHeight: '350px' }}>
+              <div className="flex flex-col gap-4 overflow-y-auto pr-1" style={{ maxHeight: "350px" }}>
                 {selectedEvents.map((event) => {
                   const remaining = getRemainingLabel(event);
                   return (
-                    <div key={event.id}
-                      className={`flex items-start gap-4 p-5 rounded-2xl border transition-all ${
-                        event.completed ? "bg-green-50 border-green-100" : "bg-[#FAFAFA] border-[#F2F2F2]"
-                      }`}
+                    <div
+                      key={event.id}
+                      className="flex items-start gap-4 p-5 rounded-2xl border transition-all"
+                      style={{
+                        backgroundColor: event.color.bg,
+                        borderColor: event.color.border,
+                      }}
                     >
-                      {/* Status dot */}
-                      <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 mt-1.5 ${
-                        event.completed ? "bg-green-400" : "bg-[#F5C842]"
-                      }`} />
-
+                      <div
+                        className="w-2.5 h-2.5 rounded-full flex-shrink-0 mt-1.5"
+                        style={{ backgroundColor: event.color.dot }}
+                      />
                       <div className="flex-1 min-w-0">
-                        <p className={`text-[15px] font-bold leading-tight ${
-                          event.completed ? "line-through text-[#aaa]" : "text-[#0E0E0E]"
-                        }`}>
-                          {event.title}
+                        <p className="text-[15px] font-bold leading-tight text-[#0E0E0E]">{event.title}</p>
+                        <p
+                          className="text-[10px] font-bold tracking-widest uppercase mt-1"
+                          style={{ color: event.color.label }}
+                        >
+                          {STATUS_LABEL[event.status]}
                         </p>
-                        
-                        {event.time && (
-                           <p className="text-[12px] text-[#bbb] font-medium mt-1">{event.time}</p>
-                        )}
-
-                        {/* Date range if multi-day */}
-                        {event.startDay !== event.endDay && (
-                          <p className="text-[11px] font-semibold text-[#C8980A] mt-1.5">
-                            📅 {MONTHS[event.month].slice(0, 3)} {event.startDay} → {MONTHS[event.month].slice(0, 3)} {event.endDay}
-                          </p>
-                        )}
-
-                        {/* Countdown */}
+                        <p className="text-[11px] font-semibold text-[#888] mt-1.5">
+                          {event.fullStart} → {event.fullEnd}
+                        </p>
                         {!event.completed && (
                           <p className={`text-[11px] font-bold tracking-wide uppercase mt-2 ${remaining.color}`}>
                             {remaining.label}
@@ -353,7 +392,6 @@ export default function Schedule({ kanbanEvents = [] }) {
               </div>
             )}
           </div>
-
         </div>
       </div>
     </div>
