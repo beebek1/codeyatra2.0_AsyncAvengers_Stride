@@ -1,38 +1,59 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X } from 'lucide-react';
-
-const LEVEL_TASKS = {
-  beginner: [
-    { id: 'b1', content: 'Design new landing page', week: 'WEEK 1' },
-    { id: 'b2', content: 'Fix navigation bug', week: 'WEEK 2-4' },
-    { id: 'b3', content: 'Review pull requests', week: 'MONTH 2' },
-    { id: 'b4', content: 'Implement user authentication', week: 'MONTH 3' },
-  ],
-  intermediate: [
-    { id: 'i1', content: 'Build REST API endpoints', week: 'WEEK 1' },
-    { id: 'i2', content: 'Write unit tests', week: 'WEEK 2-4' },
-    { id: 'i3', content: 'Set up CI/CD pipeline', week: 'MONTH 2' },
-    { id: 'i4', content: 'Performance audit', week: 'MONTH 3' },
-  ],
-  advanced: [
-    { id: 'a1', content: 'System architecture design', week: 'WEEK 1' },
-    { id: 'a2', content: 'Microservices migration', week: 'WEEK 2-4' },
-    { id: 'a3', content: 'Security hardening', week: 'MONTH 2' },
-    { id: 'a4', content: 'Scale to 1M users', week: 'MONTH 3' },
-  ],
-};
+import { X, Clock, ChevronRight, Lock } from 'lucide-react';
 
 const Y = '#f5c842';
+const INK = '#1A1A1A';
 
-export default function Kanban({ levelId, onClose, onLevelComplete }) {
-  const initialTasks = (LEVEL_TASKS[levelId] || LEVEL_TASKS.beginner).map(t => ({
-    ...t,
-    checked: false,
-  }));
+// Your updated mock data structure
+export const MOCK_BACKEND_TASKS = {
+  "frontend": [
+    { id: 'fe-1', task_name: 'Mastering Semantic HTML & CSS Variables', status: 'pen', timeline: '3 days' },
+    { id: 'fe-2', task_name: 'Deep Dive into Modern JavaScript (ES6+)', status: 'pending', timeline: '1 week' },
+    { id: 'fe-3', task_name: 'Building Reactive UIs with React.js', status: 'pending', timeline: '10 days' },
+    { id: 'fe-4', task_name: 'State Management with Redux & Context API', status: 'pending', timeline: '5 days' },
+    { id: 'fe-5', task_name: 'Testing Components with Vitest & RTL', status: 'pending', timeline: '4 days' }
+  ],
+  "backend": [
+    { id: 'be-1', task_name: 'Server-side Logic with Node.js', status: 'pending', timeline: '5 days' },
+    { id: 'be-2', task_name: 'Database Modeling with PostgreSQL', status: 'pending', timeline: '1 week' },
+    { id: 'be-3', task_name: 'Authentication & JWT Security', status: 'pending', timeline: '4 days' },
+    { id: 'be-4', task_name: 'Deploying Scalable APIs to AWS', status: 'pending', timeline: '6 days' }
+  ],
+  "aieng": [
+    { id: 'ai-1', task_name: 'Python for Data Engineering', status: 'completed', timeline: '4 days' },
+    { id: 'ai-2', task_name: 'Understanding Neural Networks', status: 'pending', timeline: '2 weeks' },
+    { id: 'ai-3', task_name: 'Implementing LLMs with LangChain', status: 'pending', timeline: '8 days' },
+    { id: 'ai-4', task_name: 'Fine-tuning Models for Production', status: 'pending', timeline: '12 days' }
+  ],
+  "uidesign": [
+    { id: 'ui-1', task_name: 'Visual Hierarchy & Typography', status: 'pending', timeline: '3 days' },
+    { id: 'ui-2', task_name: 'Mastering Auto-Layout in Figma', status: 'pending', timeline: '2 days' },
+    { id: 'ui-3', task_name: 'Building Accessible Design Systems', status: 'pending', timeline: '1 week' },
+    { id: 'ui-4', task_name: 'High-Fidelity Prototyping', status: 'pending', timeline: '5 days' }
+  ],
+  "pm": [
+    { id: 'pm-1', task_name: 'Market Research & User Interviews', status: 'pending', timeline: '1 week' },
+    { id: 'pm-2', task_name: 'Defining PRDs and User Stories', status: 'pending', timeline: '4 days' },
+    { id: 'pm-3', task_name: 'Prioritization Frameworks (RICE)', status: 'pending', timeline: '3 days' },
+    { id: 'pm-4', task_name: 'A/B Testing & Data Analytics', status: 'pending', timeline: '6 days' }
+  ],
+  "fintech": [
+    { id: 'fin-1', task_name: 'Introduction to Financial Markets', status: 'pending', timeline: '5 days' },
+    { id: 'fin-2', task_name: 'API Integrations for Payments (Stripe)', status: 'pending', timeline: '1 week' },
+    { id: 'fin-3', task_name: 'Regulatory Compliance & KYC', status: 'pending', timeline: '4 days' }
+  ]
+};
 
-  const [tasks, setTasks] = useState(initialTasks);
+export default function Kanban({ levelId = 'frontend', onClose, onLevelComplete }) {
+  const [tasks, setTasks] = useState([]);
   const [toast, setToast] = useState({ show: false, message: '' });
+
+  // Sync tasks when levelId changes
+  useEffect(() => {
+    const data = MOCK_BACKEND_TASKS[levelId] || MOCK_BACKEND_TASKS["frontend"];
+    setTasks(data.map(t => ({ ...t, checked: t.status === 'completed' })));
+  }, [levelId]);
 
   const triggerToast = (msg) => {
     setToast({ show: true, message: msg });
@@ -42,16 +63,20 @@ export default function Kanban({ levelId, onClose, onLevelComplete }) {
   const toggleCheck = (index) => {
     const task = tasks[index];
     if (task.checked) return;
+    
+    // Logic check: Prevents skipping tasks
     if (index > 0 && !tasks[index - 1].checked) {
-      triggerToast('Complete the previous step first.');
+      triggerToast('Complete previous steps to unlock');
       return;
     }
-    const updated = tasks.map((t, i) => i === index ? { ...t, checked: true } : t);
+
+    const updated = tasks.map((t, i) => 
+      i === index ? { ...t, checked: true, status: 'completed' } : t
+    );
     setTasks(updated);
 
-    const allDone = updated.every(t => t.checked);
-    if (allDone && onLevelComplete) {
-      setTimeout(() => onLevelComplete(levelId), 600);
+    if (updated.every(t => t.checked) && onLevelComplete) {
+      setTimeout(() => onLevelComplete(levelId), 1000);
     }
   };
 
@@ -59,92 +84,104 @@ export default function Kanban({ levelId, onClose, onLevelComplete }) {
   const pct = tasks.length > 0 ? Math.round((completedCount / tasks.length) * 100) : 0;
   const isAllComplete = completedCount === tasks.length;
 
-  const levelLabel = levelId
-    ? levelId.charAt(0).toUpperCase() + levelId.slice(1)
-    : 'Beginner';
-
   return (
-    <div className="h-full flex flex-col bg-white overflow-hidden relative">
-
-      {/* Toast */}
+    <div className="h-full flex flex-col bg-white overflow-hidden relative selection:bg-[#f5c842]/30">
+      
+      {/* Toast Notification */}
       <AnimatePresence>
         {toast.show && (
           <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-            className="absolute top-4 left-1/2 -translate-x-1/2 z-50 bg-gray-900 text-white px-6 py-3 rounded-2xl font-bold text-xs shadow-2xl whitespace-nowrap"
+            initial={{ opacity: 0, y: -20, x: '-50%' }}
+            animate={{ opacity: 1, y: 0, x: '-50%' }}
+            exit={{ opacity: 0, y: -20, x: '-50%' }}
+            className="absolute top-6 left-1/2 z-[100] bg-[#1A1A1A] text-white px-6 py-3.5 rounded-2xl font-bold text-[11px] shadow-2xl border border-white/5 flex items-center gap-3"
           >
+            <Lock size={14} className="text-[#f5c842]" strokeWidth={3} />
             {toast.message}
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Header */}
-      <div className="flex items-start justify-between px-8 pt-8 pb-6 border-b border-gray-100 flex-shrink-0">
-        <div>
-          <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.4em] mb-1">Phase</p>
-          <h2 className="text-3xl font-black text-gray-900 tracking-tighter uppercase leading-none">
-            {levelLabel}
+      {/* Clean Header */}
+      <div className="flex items-center justify-between px-10 pt-10 pb-8 border-b border-black/[0.03]">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-[#f5c842] shadow-[0_0_8px_#f5c842]" />
+            <p className="text-[10px] font-black text-[#BBB] uppercase tracking-[0.3em]">Learning Roadmap</p>
+          </div>
+          <h2 className="text-3xl font-black text-[#1A1A1A] tracking-tighter uppercase leading-none">
+            {levelId}
           </h2>
         </div>
         <button
           onClick={onClose}
-          className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors"
+          className="w-12 h-12 rounded-full bg-[#F9F9F8] flex items-center justify-center hover:bg-[#1A1A1A] group transition-all duration-500 cursor-pointer"
         >
-          <X size={16} strokeWidth={2.5} className="text-gray-600" />
+          <X size={20} className="text-[#1A1A1A] group-hover:text-white transition-colors" strokeWidth={2.5} />
         </button>
       </div>
 
-      {/* Tasks */}
-      <div className="flex-1 overflow-y-auto px-8 py-6 space-y-4">
+      {/* Scrollable Task List */}
+      <div className="flex-1 overflow-y-auto px-10 py-8 space-y-5">
         {tasks.map((task, index) => {
           const isLocked = index > 0 && !tasks[index - 1].checked;
+          
           return (
             <motion.div
               key={task.id}
               whileTap={isLocked ? { x: [-4, 4, -4, 4, 0] } : { scale: 0.98 }}
               onClick={() => toggleCheck(index)}
+              className="relative"
             >
               <div
-                className={`rounded-[1.5rem] p-5 transition-all duration-300 border-2 ${
+                className={`rounded-[2rem] p-6 transition-all duration-500 border-2 ${
                   task.checked
-                    ? 'bg-gray-50 border-gray-100 cursor-default'
+                    ? 'bg-[#FBFBF9] border-transparent opacity-60'
                     : isLocked
-                    ? 'bg-white border-gray-100 opacity-40 cursor-not-allowed'
-                    : 'bg-white border-gray-200 hover:border-gray-300 cursor-pointer shadow-sm'
+                    ? 'bg-white border-gray-50 opacity-40 cursor-not-allowed shadow-none'
+                    : 'bg-white border-black/[0.04] hover:border-[#f5c842]/40 cursor-pointer shadow-sm hover:shadow-xl'
                 }`}
               >
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-6">
+                  {/* Status Circle */}
                   <div
-                    className="w-7 h-7 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-all duration-300"
+                    className="w-10 h-10 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-all duration-500"
                     style={{
                       backgroundColor: task.checked ? Y : 'transparent',
-                      borderColor: task.checked ? Y : isLocked ? '#f3f4f6' : '#e5e7eb',
+                      borderColor: task.checked ? Y : isLocked ? '#F0F0EE' : '#E5E7EB',
                     }}
                   >
-                    {task.checked && (
+                    {task.checked ? (
                       <motion.svg
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        className="w-3.5 h-3.5 text-white"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        strokeWidth={4}
+                        initial={{ scale: 0, rotate: -45 }} animate={{ scale: 1, rotate: 0 }}
+                        className="w-5 h-5 text-[#1A1A1A]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={4}
                       >
                         <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                       </motion.svg>
+                    ) : isLocked ? (
+                      <Lock size={14} className="text-gray-200" />
+                    ) : (
+                      <div className="w-2 h-2 rounded-full bg-gray-200 group-hover:bg-[#f5c842] transition-colors" />
                     )}
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-[10px] font-black text-gray-300 uppercase tracking-widest mb-0.5">
-                      {task.week}
+
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Clock size={11} className={task.checked ? "text-gray-300" : "text-[#f5c842]"} />
+                      <span className={`text-[10px] font-bold uppercase tracking-widest ${task.checked ? 'text-gray-300' : 'text-[#BBB]'}`}>
+                        {task.timeline}
+                      </span>
                     </div>
-                    <div className={`text-base font-bold tracking-tight truncate ${task.checked ? 'text-gray-400 line-through' : 'text-gray-900'}`}>
-                      {task.content}
+                    <div className={`text-[16px] font-bold tracking-tight leading-tight ${task.checked ? 'text-gray-400 line-through font-medium' : 'text-[#1A1A1A]'}`}>
+                      {task.task_name}
                     </div>
                   </div>
+
+                  {!task.checked && !isLocked && (
+                    <div className="w-8 h-8 rounded-full bg-[#f5c842]/10 flex items-center justify-center">
+                      <ChevronRight size={16} className="text-[#f5c842]" strokeWidth={3} />
+                    </div>
+                  )}
                 </div>
               </div>
             </motion.div>
@@ -152,41 +189,39 @@ export default function Kanban({ levelId, onClose, onLevelComplete }) {
         })}
       </div>
 
-      {/* Footer */}
-      <div className="flex-shrink-0 px-8 py-6 border-t border-gray-100 flex items-center justify-between gap-4">
-        <div>
-          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Progress</p>
-          <div className="text-4xl font-black tracking-tighter" style={{ color: Y }}>
-            {pct}%
+      {/* Dynamic Footer Progress */}
+      <div className="flex-shrink-0 px-10 py-10 border-t border-black/[0.03] bg-white flex items-center justify-between gap-10">
+        <div className="flex flex-col">
+          <p className="text-[11px] font-black text-[#BBB] uppercase tracking-widest mb-1">Phase Status</p>
+          <div className="text-5xl font-black tracking-tighter text-[#1A1A1A]">
+            {pct}<span className="text-[#f5c842]">%</span>
           </div>
         </div>
 
-        <div className="flex-1 max-w-[120px]">
-          <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
-            <motion.div
-              className="h-full rounded-full"
-              style={{ backgroundColor: Y }}
-              animate={{ width: `${pct}%` }}
-              transition={{ duration: 0.8, ease: 'easeOut' }}
-            />
-          </div>
+        <div className="flex-1 relative h-3 bg-gray-100 rounded-full overflow-hidden">
+          <motion.div
+            className="absolute inset-y-0 left-0 rounded-full"
+            style={{ backgroundColor: Y }}
+            animate={{ width: `${pct}%` }}
+            transition={{ duration: 1.2, ease: [0.34, 1.56, 0.64, 1] }}
+          />
         </div>
 
         <AnimatePresence>
           {isAllComplete && (
             <motion.button
-              initial={{ opacity: 0, x: 16 }}
+              initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 16 }}
-              whileHover={{ scale: 1.04 }}
+              exit={{ opacity: 0, x: 20 }}
+              whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => onLevelComplete && onLevelComplete(levelId)}
-              className="bg-black text-white px-6 py-3 rounded-2xl font-black text-sm shadow-xl flex items-center gap-2"
+              className="bg-[#1A1A1A] text-white px-8 py-5 rounded-[2rem] font-black text-xs shadow-2xl flex items-center gap-3 cursor-pointer"
             >
-              NEXT
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-              </svg>
+              UPGRADE PHASE
+              <div className="w-6 h-6 rounded-full bg-[#f5c842] flex items-center justify-center">
+                <ChevronRight size={14} className="text-[#1A1A1A]" strokeWidth={4} />
+              </div>
             </motion.button>
           )}
         </AnimatePresence>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { Play } from "lucide-react";
 
 // Icons with high-contrast strokes for better visibility
 const careerIcons = [
@@ -67,14 +68,16 @@ export default function EnhancedDashboard() {
 
           <div className="flex flex-wrap gap-4">
             <button 
-              onClick={() => navigate("/quiz")}
-              className="bg-[#111827] text-white px-8 py-4 rounded-xl font-bold hover:bg-black transition-all shadow-xl shadow-gray-200 active:scale-95"
+              onClick={() => navigate("/roadmap")}
+              className="flex items-center gap-2 cursor-pointer bg-[#111827] text-white px-8 py-4 rounded-xl font-bold hover:bg-black transition-all shadow-xl shadow-gray-200 active:scale-95"
             >
-              Start Free Assessment
+              Resume Learning
+              <Play className=" h-5 w-5"/>
+              
             </button>
             <button 
               onClick={() => navigate("/careers")}
-              className="bg-white border border-gray-200 text-[#111827] px-8 py-4 rounded-xl font-bold hover:border-gray-400 transition-all active:scale-95"
+              className="cursor-pointer bg-white border border-gray-200 text-[#111827] px-8 py-4 rounded-xl font-bold hover:border-gray-400 transition-all active:scale-95"
             >
               Explore Paths
             </button>

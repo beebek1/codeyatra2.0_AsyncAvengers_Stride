@@ -1,6 +1,6 @@
 import { DataTypes } from "sequelize";
 import { sequelize } from "../../db/db.js";
-import Career from "../careers/career.model.js"; // Import Career model for association
+import Career from "../careers/career.model.js";
 
 const Level = sequelize.define(
   "Level",
@@ -14,6 +14,12 @@ const Level = sequelize.define(
     level_name: {
       type: DataTypes.ENUM("beginner", "intermediate", "advance"),
       allowNull: false,
+    },
+
+    status: {
+      type: DataTypes.ENUM("locked", "incomplete", "completed"),
+      allowNull: false,
+      defaultValue: "locked", // default when created
     },
 
     careerId: {
