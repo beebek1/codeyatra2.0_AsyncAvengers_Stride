@@ -267,8 +267,6 @@ export default function EnhancedDashboard() {
               { emoji: "🎨", name: "Design",     count: "9 tracks"  },
               { emoji: "📊", name: "Data & AI",  count: "11 tracks" },
               { emoji: "📣", name: "Marketing",  count: "7 tracks"  },
-              { emoji: "💰", name: "Finance",    count: "6 tracks"  },
-              { emoji: "🧠", name: "Product",    count: "5 tracks"  },
             ].map((cat) => (
               <div
                 key={cat.name}
@@ -288,7 +286,6 @@ export default function EnhancedDashboard() {
       <section className="bg-white py-20 px-6 border-t border-gray-100">
         <div className="max-w-7xl mx-auto">
           <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3 flex items-center gap-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#F5C842] inline-block"></span> Social Proof
           </p>
           <h2 className="text-4xl font-extrabold text-[#111827] mb-12 tracking-tight">What early users say</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
