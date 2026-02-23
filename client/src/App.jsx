@@ -11,9 +11,9 @@ import QuizPage from './pages/Quizpage';
 import { ScrollToTop , NotFound, LoadingScreen} from './components/Elements';
 import CareersPage from './pages/Career';
 import Schedule from './pages/Schedule';
-import Kanban from './components/Kanban';
 import ProtectedRoute from './protected/ProtectedROute';
 import Trello from './pages/Trello';
+import MentoRregister from './pages/auth/MentoRregister';
 
 import Account from './pages/Account';
 import Roadmap from './pages/Roadmap';
@@ -35,6 +35,7 @@ function AppWrapper() {
            
            <Route path="/login" element={<Login/>} />   
            <Route path="/register" element={<Register/>} />
+           <Route path="/mentor" element={<MentoRregister />} />
    
            <Route path="/" element={<Dashboard/>} />
            <Route path="/forgot-password" element={<ForgotPassword/>} />
