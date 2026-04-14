@@ -2,7 +2,7 @@
 # Stride (Async Avengers)
 
 ### **The Problem (Why we built this)**
-PS: THIS WAS AN HACKATHON PROJECT
+PS: THIS WAS AN HACKATHON PROJECT built in a group of 4 people
 Let’s be real: choosing a career in 2026 is overwhelming. You search "How to become an AI Engineer" and get 50 different roadmaps, 100 YouTube playlists, and a headache. Most people have the ambition, but they get lost in the "vague middle"—they don't know what to do **today** to reach a goal **two years** from now.
 
 We built this to bridge the gap between "I want to be X" and "Here is your Trello board for the week."
